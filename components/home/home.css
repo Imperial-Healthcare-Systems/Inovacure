@@ -1,0 +1,254 @@
+/* Corporate Home — built TO the approved comp project/working/V/comps/home-C.html
+   (V1 human-approved 2026-07-14). Classes carry an `hc-` prefix so the dormant
+   storefront styles in globals.css (.hero, .certs, .nav …) never collide.
+   Tokens + shared primitives (.wrap, .btn*, .eyebrow) come from globals.css. */
+
+/* --- primitives the comp adds on top of globals --- */
+.btn-ghost-dark{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+.btn-ghost-dark:hover{border-color:#fff;transform:translateY(-2px)}
+
+/* --- nav over dark hero --- */
+.hc-nav{position:absolute;top:0;left:0;right:0;z-index:50}
+.hc-nav .wrap{display:flex;align-items:center;justify-content:space-between;height:84px;gap:24px}
+.hc-logochip{background:#fff;border-radius:12px;padding:0 8px;display:inline-flex;overflow:hidden;box-shadow:var(--shadow-sm)}
+.hc-logochip img{height:64px;width:auto;margin:-2px 0}
+@media(max-width:560px){.hc-logochip{padding:0 6px}.hc-logochip img{height:50px}}
+.hc-menu{display:flex;gap:28px;align-items:center;font-weight:500;font-size:.95rem;color:#dbe8fa}
+.hc-menu a{transition:color .2s}
+.hc-menu a:hover{color:#fff}
+.hc-menu .hc-caret{font-size:.7em;opacity:.6}
+@media(max-width:980px){.hc-menu{display:none}}
+
+/* --- hero: sunrise arcs + glow --- */
+.hc-hero{position:relative;background:
+  radial-gradient(90% 70% at 50% 118%, rgba(111,175,80,.34) 0%, rgba(88,150,61,.12) 34%, transparent 60%),
+  radial-gradient(120% 100% at 50% 130%, #1668c4 0%, transparent 55%),
+  linear-gradient(180deg,#002a5e 0%, var(--primary-dark) 60%, #003a82 100%);
+  color:#fff;overflow:hidden;min-height:88vh;display:grid;align-items:end}
+.hc-arcs{position:absolute;left:50%;bottom:-98vw;transform:translateX(-50%);width:150vw;height:150vw;pointer-events:none}
+.hc-arcs i{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(255,255,255,.14)}
+.hc-arcs i:nth-child(2){inset:5vw;border-color:rgba(111,175,80,.28);border-width:3px}
+.hc-arcs i:nth-child(3){inset:10vw;border-color:rgba(255,255,255,.08)}
+.hc-arcs i:nth-child(4){inset:16vw;border-top:6px solid var(--accent-light);border-color:transparent;animation:hcArcTurn 46s linear infinite}
+@keyframes hcArcTurn{to{transform:rotate(360deg)}}
+.hc-sun{position:absolute;left:50%;bottom:-34vw;transform:translateX(-50%);width:64vw;height:64vw;border-radius:50%;background:radial-gradient(circle at 50% 22%, rgba(111,175,80,.95) 0%, rgba(88,150,61,.55) 34%, rgba(88,150,61,0) 66%);opacity:.9;animation:hcSunBreathe 9s ease-in-out infinite alternate}
+@keyframes hcSunBreathe{from{opacity:.82}to{opacity:.95}}
+
+/* --- dawn build-up layers (CSS holds the END state; the runtime animates FROM night) --- */
+/* .hc-intro bridges SSR paint -> hydration: night state until gsap takes over
+   with inline styles (which win over these rules). Removed on intro complete. */
+.hc-intro [data-hero-dawn] .hc-night{opacity:1}
+.hc-intro [data-hero-dawn] .hc-stars{opacity:1}
+.hc-intro [data-hero-dawn] .hc-sun{opacity:.15;transform:translateX(-50%) translateY(14vw) scale(.82);filter:blur(26px);animation:none}
+.hc-intro [data-hero-dawn] .hc-arcs i{opacity:0}
+.hc-intro [data-hero-dawn] .hc-nav,
+.hc-intro [data-hero-dawn] [data-load-seq]{opacity:0}
+.hc-night{position:absolute;inset:0;pointer-events:none;opacity:0;background:linear-gradient(180deg,#00122b 0%,#001736 55%,#00204a 100%)}
+.hc-stars{position:absolute;inset:0;pointer-events:none;opacity:.25;overflow:hidden}
+.hc-stars i{position:absolute;inset:0;width:2px;height:2px;border-radius:50%;background:transparent;
+  box-shadow:8vw 12vh 0 rgba(255,255,255,.7),19vw 6vh 0 rgba(255,255,255,.4),27vw 22vh 0 1px rgba(255,255,255,.55),36vw 9vh 0 rgba(207,224,245,.6),44vw 18vh 0 rgba(255,255,255,.35),53vw 5vh 0 1px rgba(255,255,255,.6),61vw 15vh 0 rgba(255,255,255,.45),70vw 8vh 0 rgba(207,224,245,.65),78vw 20vh 0 rgba(255,255,255,.4),87vw 11vh 0 1px rgba(255,255,255,.55),94vw 24vh 0 rgba(255,255,255,.5),13vw 30vh 0 rgba(255,255,255,.3),31vw 34vh 0 rgba(207,224,245,.45),49vw 29vh 0 rgba(255,255,255,.35),67vw 33vh 0 rgba(255,255,255,.5),83vw 30vh 0 rgba(207,224,245,.4),5vw 40vh 0 rgba(255,255,255,.35),91vw 42vh 0 rgba(255,255,255,.3);
+  animation:hcTwinkle 4.2s ease-in-out infinite alternate}
+.hc-stars i:nth-child(2){transform:translate(3vw,4vh) scale(.8);animation-duration:5.6s;animation-delay:-2.2s;opacity:.7}
+@keyframes hcTwinkle{from{opacity:.55}to{opacity:1}}
+.hc-hero > .wrap{position:relative;padding-block:140px clamp(64px,9vw,120px)}
+.hc-kick{font-family:var(--font-display);font-weight:700;font-size:.74rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accent-light);display:inline-flex;align-items:center;gap:12px}
+.hc-kick::before{content:"";width:34px;height:2px;background:var(--accent-light)}
+.hc-hero h1{font-size:clamp(2.6rem,6vw,5rem);font-weight:900;color:#fff;max-width:15ch;margin:20px 0 24px}
+.hc-hero h1 em{font-style:normal;color:var(--accent-light)}
+.hc-hero > .wrap > p{max-width:52ch;color:#cfe0f5;font-size:clamp(1rem,1.2vw,1.15rem)}
+.hc-row{display:flex;gap:14px;margin-top:34px;flex-wrap:wrap;align-items:center}
+.hc-scroll{position:absolute;right:var(--gutter);bottom:28px;font-size:.7rem;letter-spacing:.26em;text-transform:uppercase;color:#9fb4cd;writing-mode:vertical-rl;animation:hcScrollNudge 2.6s var(--ease) infinite}
+@keyframes hcScrollNudge{0%,100%{transform:translateY(0);opacity:.75}50%{transform:translateY(8px);opacity:1}}
+
+/* --- editorial image band (real PDF photography) --- */
+.hc-band{position:relative;height:clamp(260px,32vw,460px);overflow:hidden}
+/* image oversized + centered so the scroll parallax never exposes a gap;
+   static (no-JS / reduced-motion) view stays a clean centered crop */
+.hc-band img{width:100%;height:124%;position:relative;top:-12%;object-fit:cover;display:block}
+.hc-band .hc-cap{position:absolute;left:0;right:0;bottom:0;padding:26px var(--gutter);background:linear-gradient(180deg,transparent, rgba(0,42,94,.72));color:#fff;font-family:var(--font-display);font-weight:700;font-size:.78rem;letter-spacing:.2em;text-transform:uppercase}
+.hc-band .hc-cap small{display:block;font-family:var(--font-body);font-weight:400;letter-spacing:0;text-transform:none;font-size:.82rem;color:#cfe0f5;margin-top:4px}
+
+/* --- certifications strip --- */
+.hc-certs{border-block:1px solid var(--line);background:var(--mist)}
+.hc-certs .wrap{display:flex;gap:clamp(18px,3.5vw,44px);align-items:center;height:64px;overflow:hidden}
+.hc-certs span{display:inline-flex;gap:8px;align-items:center;font-family:var(--font-display);font-weight:600;font-size:.82rem;color:var(--primary-dark);white-space:nowrap}
+.hc-certs i{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.hc-certs .hc-lbl{color:var(--muted);font-weight:700;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase}
+.hc-tbc{font-size:.62rem;color:var(--warn);font-weight:700;letter-spacing:.08em}
+/* enhancement: credentials feel alive — dots glow-pulse (sunrise afterglow),
+   items lift + deepen on hover. Global reduced-motion rule freezes the pulse. */
+.hc-certbelt{flex:1;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
+.hc-certtrack{display:flex;align-items:center;width:max-content;animation:hcCertDrift 26s linear infinite}
+.hc-certtrack:hover{animation-play-state:paused}
+.hc-certtrack span{margin-right:clamp(18px,3.5vw,44px)}
+.hc-certdup{display:inline-flex}
+.hc-certtrack span{transition:color .2s,transform .25s var(--ease)}
+.hc-certtrack span:hover{color:var(--primary-500);transform:translateY(-1px)}
+.hc-certtrack i{animation:hcDotGlow 3.2s ease-in-out infinite}
+.hc-certtrack span:nth-child(2) i{animation-delay:-.8s}
+.hc-certtrack span:nth-child(3) i{animation-delay:-1.6s}
+.hc-certtrack span:nth-child(4) i{animation-delay:-2.4s}
+@keyframes hcDotGlow{0%,100%{box-shadow:0 0 0 0 rgba(88,150,61,.35)}50%{box-shadow:0 0 0 4px rgba(88,150,61,0)}}
+/* mobile: stack the label above the drifting belt; faster loop for the
+   narrower window */
+@media(max-width:760px){
+  .hc-certs .wrap{display:block;height:auto;padding-top:12px;padding-bottom:14px}
+  .hc-certs .hc-lbl{display:block;margin-bottom:10px}
+  .hc-certtrack{animation-duration:16s}
+}
+@keyframes hcCertDrift{to{transform:translateX(-50%)}}
+/* ⟲ RM: no drift — restore a native scrollable row instead of a clipped one */
+@media(prefers-reduced-motion:reduce){
+  .hc-certbelt{overflow-x:auto;-webkit-mask-image:none;mask-image:none}
+  .hc-certdup{display:none}
+  .hc-certtrack{width:auto}
+}
+
+/* --- clinical light body --- */
+.hc-block{padding-block:clamp(56px,7vw,96px)}
+.hc-headrow{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:40px;flex-wrap:wrap}
+.hc-headrow h2{font-size:clamp(1.7rem,3vw,2.5rem);max-width:22ch}
+.hc-vgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.hc-vcard{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:26px 22px 24px;box-shadow:var(--shadow-sm);transition:transform .25s var(--ease),box-shadow .25s;display:flex;flex-direction:column;gap:12px;border-top:3px solid var(--primary)}
+.hc-vcard:nth-child(even){border-top-color:var(--accent)}
+.hc-vcard:hover{transform:translateY(-4px);box-shadow:var(--shadow-md)}
+.hc-vcard .hc-num{font-family:var(--font-display);font-weight:900;font-size:1.9rem;color:var(--mist-2);-webkit-text-stroke:1.5px var(--primary-500)}
+.hc-vcard h3{font-size:1.06rem}
+.hc-vcard p{font-size:.88rem;color:var(--muted)}
+.hc-vcard a{font-family:var(--font-display);font-weight:600;font-size:.84rem;color:var(--primary-dark);margin-top:auto}
+/* enhancement: numerals fill with brand ink on hover; card links grow the DS
+   green underline; the top border brightens — card answers the cursor */
+.hc-vcard .hc-num{transition:color .3s var(--ease)}
+.hc-vcard:hover .hc-num{color:var(--primary-500)}
+.hc-vcard a{position:relative;align-self:flex-start;transition:color .2s}
+.hc-vcard a::after{content:"";position:absolute;left:0;bottom:-3px;height:2px;width:100%;background:var(--accent);border-radius:2px;transform:scaleX(0);transform-origin:left;transition:transform .25s var(--ease)}
+.hc-vcard a:hover{color:var(--primary-500)}
+.hc-vcard a:hover::after{transform:scaleX(1)}
+.hc-vcard{position:relative}
+.hc-vcard::before{content:"";position:absolute;top:-3px;left:0;right:0;height:3px;border-radius:3px 3px 0 0;background:var(--primary-500);opacity:0;transition:opacity .25s}
+.hc-vcard:nth-child(even)::before{background:var(--accent-light)}
+.hc-vcard:hover::before{opacity:1}
+
+.hc-reach{background:linear-gradient(180deg,var(--mist) 0%,#fff 100%)}
+.hc-rgrid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(30px,4vw,60px);align-items:center}
+.hc-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.hc-tile{background:#fff;border:1px solid var(--line);border-radius:var(--r-md);padding:18px 16px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow-sm)}
+.hc-tile svg{width:26px;height:26px}
+.hc-tile b{font-family:var(--font-display);font-size:.9rem;font-weight:700}
+.hc-tile.live::after{content:"LIVE";font-size:.58rem;font-weight:800;letter-spacing:.14em;color:var(--success)}
+.hc-tile.soon{opacity:.72}
+.hc-tile.soon::after{content:"EXPANDING";font-size:.58rem;font-weight:800;letter-spacing:.14em;color:var(--warn)}
+/* enhancement: tiles answer the cursor — lift, icon pop; EXPANDING tiles
+   wake to full presence on hover (a taste of the segment arriving) */
+.hc-tile{transition:transform .25s var(--ease),box-shadow .25s,opacity .3s,border-color .25s}
+.hc-tile svg{transition:transform .3s var(--ease)}
+.hc-tile:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:var(--primary-500)}
+.hc-tile:hover svg{transform:scale(1.14) rotate(-4deg)}
+.hc-tile.soon:hover{opacity:1}
+.hc-counters{display:grid;grid-template-columns:1fr 1fr;gap:8px 28px;margin-top:30px}
+.hc-counters div{border-left:3px solid var(--accent);padding-left:14px}
+.hc-counters b{font-family:var(--font-display);font-size:1.7rem;font-weight:900;color:var(--primary-dark);display:block;line-height:1.2}
+.hc-counters span{font-size:.8rem;color:var(--muted)}
+
+.hc-diff{background:var(--primary-dark);color:#fff;position:relative;overflow:hidden}
+/* enhancement: faint starfield echoes the hero's night sky (identity motif);
+   cards brighten + lift on hover; oversized quote mark anchors the vision */
+.hc-diffstars{opacity:.14}
+.hc-diff .wrap{position:relative}
+.hc-dcard{transition:background .25s,border-color .25s,transform .25s var(--ease)}
+.hc-dcard:hover{background:rgba(255,255,255,.11);border-color:rgba(255,255,255,.3);transform:translateY(-3px)}
+.hc-diff blockquote{position:relative;padding-left:34px}
+.hc-diff blockquote::before{content:"\201C";position:absolute;left:-6px;top:-28px;font-family:var(--font-display);font-weight:900;font-size:5.5rem;line-height:1;color:var(--accent-light);opacity:.35}
+.hc-diff .eyebrow{color:var(--accent-light)}
+.hc-diff h2{color:#fff}
+.hc-dgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:40px}
+.hc-dcard{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:var(--r-md);padding:22px}
+.hc-dcard b{font-family:var(--font-display);display:block;margin-bottom:8px}
+.hc-dcard p{font-size:.85rem;color:#cfe0f5}
+.hc-dquote{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(30px,4vw,60px);align-items:center;margin-top:44px}
+.hc-dphoto{margin:0;border-radius:var(--r-lg);overflow:hidden;border:1px solid rgba(255,255,255,.18);box-shadow:var(--shadow-lg)}
+.hc-dphoto img{display:block;width:100%;height:260px;object-fit:cover;transition:transform .6s var(--ease)}
+.hc-dphoto:hover img{transform:scale(1.04)}
+@media(max-width:880px){.hc-dquote{grid-template-columns:1fr;gap:26px}.hc-dphoto img{height:210px}}
+.hc-diff blockquote{margin-top:0;font-family:var(--font-display);font-weight:600;font-size:clamp(1.05rem,1.8vw,1.4rem);color:#dbe8fa;max-width:52ch}
+.hc-diff cite{display:block;margin-top:10px;font-style:normal;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent-light)}
+
+.hc-enq h2{font-size:clamp(1.8rem,3.2vw,2.6rem)}
+.hc-tracks{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:36px}
+.hc-track{border:1.5px solid var(--line);border-radius:var(--r-lg);padding:26px;display:flex;flex-direction:column;gap:10px;transition:border-color .2s,transform .25s var(--ease)}
+.hc-track:hover{border-color:var(--primary-500);transform:translateY(-3px)}
+.hc-track .hc-tag{font-family:var(--font-display);font-weight:700;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--primary-500)}
+.hc-track h3{font-size:1.1rem}
+.hc-track p{font-size:.87rem;color:var(--muted)}
+.hc-track .hc-go{margin-top:auto;font-family:var(--font-display);font-weight:700;font-size:.9rem;color:var(--success);transition:letter-spacing .25s var(--ease)}
+/* enhancement: whole card is the link; arrow breathes forward on hover; a
+   soft mist wash rises behind the hovered track */
+.hc-track{cursor:pointer;background:linear-gradient(180deg,transparent,transparent);transition:border-color .2s,transform .25s var(--ease),background .3s,box-shadow .25s}
+.hc-track:hover{background:linear-gradient(180deg,#fff, var(--mist));box-shadow:var(--shadow-md)}
+.hc-track:hover .hc-go{letter-spacing:.02em}
+.hc-wa b{cursor:pointer}
+.hc-wa b:hover{text-decoration:underline}
+.hc-wa{margin-top:22px;text-align:center;color:var(--muted);font-size:.9rem}
+.hc-wa b{color:var(--success)}
+
+/* --- FAQ (beat 9, human-requested) --- */
+.hc-faq{background:linear-gradient(180deg,#fff, var(--mist))}
+.hc-faqlist{margin-top:34px;max-width:72ch}
+.hc-faqitem{background:#fff;border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--shadow-sm);margin-bottom:12px;transition:border-color .2s,box-shadow .25s}
+.hc-faqitem:hover{border-color:var(--primary-500)}
+.hc-faqitem[open]{box-shadow:var(--shadow-md);border-color:var(--primary-500)}
+.hc-faqitem summary{display:flex;justify-content:space-between;align-items:center;gap:18px;cursor:pointer;list-style:none;padding:16px 20px;font-family:var(--font-display);font-weight:700;font-size:.98rem;color:var(--ink)}
+.hc-faqitem summary::-webkit-details-marker{display:none}
+.hc-faqmark{flex-shrink:0;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--mist);color:var(--primary-dark);font-weight:800;transition:transform .45s var(--ease),background .3s,color .3s}
+.hc-faqitem[open] .hc-faqmark{transform:rotate(45deg);background:var(--accent);color:#fff}
+/* animated open/close: height eases instead of snapping (Chromium's
+   ::details-content + interpolate-size; older browsers keep the instant
+   toggle). Content fades in after the panel has begun to open. */
+.hc-faqitem{interpolate-size:allow-keywords}
+.hc-faqitem::details-content{block-size:0;overflow:hidden;transition:block-size .5s var(--ease),content-visibility .5s allow-discrete}
+.hc-faqitem[open]::details-content{block-size:auto}
+.hc-faqitem > p{padding:0 20px 18px;color:var(--muted);font-size:.92rem;max-width:62ch;animation:hcFaqIn .7s var(--ease)}
+@keyframes hcFaqIn{0%{opacity:0;transform:translateY(-6px)}35%{opacity:0}100%{opacity:1;transform:translateY(0)}}
+
+.hc-foot{background:var(--primary-dark);color:#cfe0f5;padding:56px 0 30px;font-size:.88rem;border-top:3px solid transparent;border-image:linear-gradient(90deg,var(--accent-light),var(--primary-500),var(--accent-light)) 1}
+/* enhancement: footer links grow the DS green underline; sunrise hairline top
+   edge; hero's arc geometry rests below the horizon (sunset bookend) */
+.hc-foot{position:relative;overflow:hidden}
+.hc-foot .wrap{position:relative}
+.hc-footarcs{position:absolute;left:50%;bottom:-118vw;transform:translateX(-50%);width:150vw;height:150vw;pointer-events:none;opacity:.5}
+.hc-footarcs i{position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(255,255,255,.10)}
+.hc-footarcs i:nth-child(2){inset:6vw;border-color:rgba(111,175,80,.16);border-width:2px}
+.hc-footarcs i:nth-child(3){inset:12vw;border-color:rgba(255,255,255,.06)}
+.hc-foot h4{display:inline-flex;align-items:center;gap:10px}
+.hc-foot h4::before{content:"";width:22px;height:2px;background:var(--accent-light);border-radius:2px}
+.hc-lh{transition:text-shadow .3s,color .3s}
+.hc-lh:hover{color:#8ecf6d;text-shadow:0 0 18px rgba(111,175,80,.55)}
+.hc-totop{font-family:var(--font-display);font-weight:700;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#9fb4cd;transition:color .2s,transform .25s var(--ease);display:inline-block}
+.hc-totop:hover{color:#fff;transform:translateY(-2px)}
+.hc-foot li a{position:relative;transition:color .2s}
+.hc-foot li a::after{content:"";position:absolute;left:0;bottom:-2px;height:1.5px;width:100%;background:var(--accent-light);transform:scaleX(0);transform-origin:left;transition:transform .25s var(--ease)}
+.hc-foot li a:hover{color:#fff}
+.hc-foot li a:hover::after{transform:scaleX(1)}
+.hc-legal a:hover{color:#fff;text-decoration:underline}
+.hc-cols{display:grid;grid-template-columns:2fr 1fr 1fr 1.4fr;gap:32px;padding-bottom:36px;border-bottom:1px solid rgba(255,255,255,.14)}
+/* human-directed: the footer logo is the centre of attention — near-double the
+   nav size, glowing softly against the dark band */
+.hc-foot .hc-logochip{padding:0;border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.16),0 12px 44px rgba(111,175,80,.28)}
+.hc-foot .hc-logochip img{height:114px;margin:-21.5px -4px}
+@media(max-width:560px){.hc-foot .hc-logochip img{height:86px;margin:-16px -3px}}
+.hc-foot .hc-cols > div:first-child p{margin-top:18px;font-size:.95rem}
+.hc-foot h4{font-family:var(--font-display);color:#fff;font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px}
+.hc-foot li{list-style:none;margin:7px 0}
+.hc-legal{display:flex;justify-content:space-between;gap:18px;padding-top:22px;flex-wrap:wrap;font-size:.78rem}
+.hc-lh{color:var(--accent-light);font-family:var(--font-display);font-weight:700}
+
+@media(max-width:880px){
+  .hc-vgrid,.hc-dgrid{grid-template-columns:1fr 1fr}
+  .hc-tracks{grid-template-columns:1fr}
+  .hc-rgrid{grid-template-columns:1fr}
+  .hc-cols{grid-template-columns:1fr 1fr}
+}
+@media(max-width:560px){
+  .hc-vgrid,.hc-dgrid{grid-template-columns:1fr}
+  .hc-tiles{grid-template-columns:1fr 1fr}
+}

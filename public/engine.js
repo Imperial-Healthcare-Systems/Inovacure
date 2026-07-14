@@ -17,8 +17,8 @@ const fmtDate = (iso)=>{try{return new Date(iso).toLocaleDateString('en-IN',{day
 const fmtDateTime = (iso)=>{try{return new Date(iso).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}catch(e){return iso}};
 
 /* ---------- brand assets (A1 — real Inovacure logo) ---------- */
-const LOGO_IMG_SRC = "/assets/img-1.webp";
-const LOGO_MARK_SRC = "/assets/img-2.webp";
+const LOGO_IMG_SRC = "/assets/brand/logo-horizontal.svg";
+const LOGO_MARK_SRC = "/assets/brand/logo-mark.svg";
 const LOGO_SVG = `<img src="${LOGO_MARK_SRC}" alt="Inovacure" width="100%" height="100%" style="object-fit:contain;display:block">`;
 const LOGO_FULL = `<img src="${LOGO_IMG_SRC}" alt="Inovacure — Live Healthy" style="object-fit:contain;display:block">`;
 
@@ -203,14 +203,14 @@ const SEED_REVIEWS_OK = true;
    ============================================================ */
 let SETTINGS = dbLoad('settings', {
   storeName:'Inovacure Pharmaceuticals',
-  supportEmail:'harun.riaz@outlook.com',
+  supportEmail:'info@inovacure.in',
   whatsapp:'919599597879',
   currency:'₹',
   freeShipThreshold:999,
   flatShip:60,
   gstin:'09ABCDE1234F1Z5',
   invoicePrefix:'INO-2026-',
-  domain:'www.inovacure.com',
+  domain:'www.inovacure.in',
   returnPolicy:'7-day easy returns on unopened items.',
   paymentMethods:['UPI','Card','COD'],
   notifyEmail:true,
@@ -234,8 +234,8 @@ let RETURNS   = dbLoad('returns', []);
 let AUDIT     = dbLoad('audit', []);
 let STAFF     = dbLoad('staff', [
   {id:'s_owner', name:'Harun Riaz', email:'harun.riaz@outlook.com', role:'owner', active:true},
-  {id:'s_mgr',   name:'Operations Lead', email:'ops@inovacure.com', role:'manager', active:true},
-  {id:'s_ful',   name:'Warehouse Desk', email:'fulfilment@inovacure.com', role:'fulfilment', active:true}
+  {id:'s_mgr',   name:'Operations Lead', email:'ops@inovacure.in', role:'manager', active:true},
+  {id:'s_ful',   name:'Warehouse Desk', email:'fulfilment@inovacure.in', role:'fulfilment', active:true}
 ]);
 let INVOICE_SEQ = dbLoad('invoiceSeq', 1041);
 let currentUser = dbLoad('currentAdmin', null); // admin staff session
