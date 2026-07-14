@@ -25,6 +25,9 @@
 .hc-sitehead.is-scrolled .hc-sitemenu a:hover{color:var(--primary-dark)}
 .hc-sitehead.is-scrolled .hc-sitemenu a.on{color:var(--primary-dark)}
 @media(max-width:980px){.hc-sitemenu{display:none}}
+/* mobile bar = logo + burger only; the "Enquire now" CTA is carried by the
+   full-screen overlay's pinned button, so the header CTA is redundant here */
+@media(max-width:980px){.hc-headcta{display:none}}
 @media(prefers-reduced-motion:reduce){.hc-sitehead,.hc-sitehead .wrap,.hc-sitehead .hc-logochip img{transition:none}}
 
 /* --- mega-menu (rich visual panels, human-picked) --- */

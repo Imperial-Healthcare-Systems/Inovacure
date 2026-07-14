@@ -1,39 +1,12 @@
-// Beat 1 — Nav + Hero, built TO project/working/V/comps/home-C.html (V1-approved).
-// Mega-menu panels are a later human-gated beat: nav ships plain links + carets.
+// Beat 1 — Hero, built TO project/working/V/comps/home-C.html (V1-approved).
+// The home nav unified with the sitewide SiteHeader (mega-menu + mobile burger)
+// at the platforming swap beat — SiteHeader is rendered once at the page level
+// (app/page.tsx), so the hero no longer carries its own <nav>. The dawn intro's
+// nav-fade in SiteRuntime is guarded (`if (nav)`) and simply no-ops now.
 // Copy is comp-verbatim; content baseline is still v0-draft (client approval pending).
 export default function Hero() {
   return (
     <header className="hc-hero" data-hero-dawn>
-      <nav className="hc-nav" aria-label="Primary">
-        <div className="wrap">
-          <a className="hc-logochip" href="/" aria-label="Inovacure — home">
-            <img
-              src="/assets/brand/logo-horizontal.svg"
-              alt="Inovacure — Live Healthy"
-              height={32}
-            />
-          </a>
-          <div className="hc-menu">
-            <a href="/business">
-              Business <span className="hc-caret">▾</span>
-            </a>
-            <a href="/products">
-              Products <span className="hc-caret">▾</span>
-            </a>
-            <a href="/about">About</a>
-            <a href="/quality">Quality</a>
-            <a href="/partners">Partners</a>
-            <a href="/contact">Contact</a>
-          </div>
-          <a
-            className="btn btn-green"
-            style={{ padding: "11px 22px" }}
-            href="/contact#enquiry"
-          >
-            Enquire now
-          </a>
-        </div>
-      </nav>
       <div className="hc-night" aria-hidden="true"></div>
       <div className="hc-stars" aria-hidden="true">
         <i></i>
