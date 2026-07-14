@@ -51,6 +51,9 @@
 /* blend tint dies out by ~2/3 across — the far corner is the photo at full
    fidelity, only the text side wears the blue veil */
 .hc-headimg::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,42,94,.62),rgba(0,42,94,.28) 28%,rgba(0,42,94,0) 52%)}
+/* dim variant for BRIGHT photographs: stronger, longer veil under the
+   headline zone; the far corner still ends near-clean */
+.hc-headimg.dim::after{background:linear-gradient(90deg,rgba(0,42,94,.72),rgba(0,42,94,.42) 40%,rgba(0,42,94,.1) 78%)}
 .hc-headimg img{width:100%;height:100%;object-fit:cover;filter:saturate(1.08) contrast(1.04);animation:hcKenburns 20s ease-in-out infinite alternate}
 @keyframes hcKenburns{from{transform:scale(1)}to{transform:scale(1.08)}}
 @media(max-width:880px){
@@ -186,6 +189,63 @@
 @media(max-width:1100px){.hc-pcatgrid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:820px){.hc-pcatgrid{grid-template-columns:1fr 1fr}.hc-search{min-width:0;flex:1}}
 @media(max-width:520px){.hc-pcatgrid{grid-template-columns:1fr}}
+
+/* --- company pages --- */
+/* values grid (About): proof cards without photo headers, 3×2 */
+.hc-valgrid{grid-template-columns:repeat(3,1fr)}
+@media(max-width:880px){.hc-valgrid{grid-template-columns:1fr}}
+
+/* honest-state certification wall (Quality) — dashed reserved slots */
+.hc-certwall{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.hc-certslot{border:1.5px dashed rgba(255,255,255,.35);border-radius:var(--r-md);min-height:92px;
+  display:grid;place-items:center;color:rgba(255,255,255,.55);
+  font-family:var(--font-display);font-weight:700;font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;
+  transition:border-color .3s,color .3s}
+.hc-certslot:hover{border-color:rgba(255,255,255,.6);color:rgba(255,255,255,.75)}
+.hc-certwall .hc-certnote{grid-column:1/-1;padding-top:6px;font-size:.87rem;color:#cfe0f5}
+.hc-certwall .hc-certnote a{color:var(--accent-light);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.hc-certwall .hc-certnote a:hover{color:#fff}
+
+/* contact rails — email / office / phone-pending */
+.hc-rails{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.hc-rail{display:block;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;
+  box-shadow:var(--shadow-sm);color:inherit;transition:transform .25s var(--ease),box-shadow .25s,border-color .25s}
+a.hc-rail:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:var(--success)}
+.hc-rail .hc-ic{width:44px;height:44px;border-radius:12px;background:var(--halo);display:grid;place-items:center;
+  margin-bottom:14px;color:var(--success);font-weight:800;font-size:1.05rem}
+.hc-rail b{font-family:var(--font-display);display:block;margin-bottom:6px}
+.hc-rail p{font-size:.9rem;color:var(--muted);margin-bottom:10px}
+.hc-railcta{font-family:var(--font-display);font-weight:700;font-size:.8rem;color:var(--success)}
+@media(max-width:880px){.hc-rails{grid-template-columns:1fr}}
+
+/* intent-segmented enquiry panel (Contact) */
+.hc-enqlead{color:var(--muted);margin:10px 0 28px;max-width:56ch}
+.hc-enqpanel{display:grid;grid-template-columns:minmax(240px,.9fr) 1.6fr;gap:22px;align-items:start;
+  scroll-margin-top:96px}
+.hc-lanes{display:grid;grid-template-columns:1fr;gap:10px}
+.hc-lane{text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:var(--r-md);
+  padding:14px 16px;cursor:pointer;transition:border-color .2s,background .2s,transform .2s var(--ease)}
+.hc-lane b{font-family:var(--font-display);display:block;font-size:.92rem}
+.hc-lane span{font-size:.78rem;color:var(--muted)}
+.hc-lane:hover{border-color:var(--primary-500)}
+.hc-lane.on{border-color:var(--success);background:var(--halo);transform:translateX(4px)}
+.hc-lane.on b{color:var(--primary-dark)}
+.hc-enqform{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;background:#fff;border:1px solid var(--line);
+  border-radius:var(--r-lg);padding:clamp(18px,2.5vw,28px);box-shadow:var(--shadow-sm)}
+.hc-enqform label{display:grid;gap:6px}
+.hc-enqform label>span{font-family:var(--font-display);font-weight:600;font-size:.78rem;color:var(--ink)}
+.hc-enqform input,.hc-enqform textarea{border:1.5px solid var(--line);border-radius:var(--r-md);padding:11px 14px;
+  font:inherit;color:var(--ink);background:#fff;outline:0;transition:border-color .2s;width:100%;resize:vertical}
+.hc-enqform input:focus,.hc-enqform textarea:focus{border-color:var(--primary-500)}
+.hc-wide{grid-column:1/-1}
+.hc-enqfoot{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.hc-enqfoot small{color:var(--muted);max-width:40ch}
+@media(max-width:880px){
+  .hc-enqpanel{grid-template-columns:1fr}
+  .hc-lanes{grid-template-columns:1fr 1fr}
+  .hc-lane.on{transform:none}
+  .hc-enqform{grid-template-columns:1fr}
+}
 
 /* --- product detail (per V1 product comp; hc-prefixed) --- */
 .hc-pdphead{padding:0}
