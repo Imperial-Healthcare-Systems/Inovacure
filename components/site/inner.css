@@ -33,22 +33,28 @@
   linear-gradient(180deg,#002a5e 0%, var(--primary-dark) 100%);color:#fff;position:relative;overflow:hidden}
 .hc-pagehead .hc-arc{position:absolute;left:50%;bottom:-140%;transform:translateX(-50%);width:150%;aspect-ratio:1;border-radius:50%;border:2px solid rgba(255,255,255,.12)}
 .hc-pagehead .hc-arc.g{bottom:-150%;width:130%;border-color:rgba(111,175,80,.3)}
-/* top padding clears the fixed header (96px) with breathing room */
-.hc-pagehead .wrap{position:relative;padding-block:clamp(44px,6vw,80px);padding-top:calc(clamp(24px,3vw,44px) + 96px)}
+/* top padding clears the fixed header (96px) with breathing room; the
+   min-height + centering keep EVERY inner page head the same size regardless
+   of how many lines its copy wraps to (universal; home hero is separate) */
+.hc-pagehead .wrap{position:relative;padding-block:clamp(44px,6vw,80px);padding-top:calc(clamp(24px,3vw,44px) + 96px);
+  display:flex;flex-direction:column;justify-content:center;min-height:clamp(420px,37vw,560px)}
+@media(max-width:880px){.hc-pagehead .wrap{min-height:0}}
 /* split page-head: text left, photography bleeding off the right edge — no
    card chrome; the image melts into the band via a left fade + blue tint.
    ⟲ RM: global rule freezes ken-burns */
-.hc-pagehead.hc-split .hc-headtext{max-width:56ch;position:relative;z-index:2}
-.hc-headimg{position:absolute;right:0;top:0;bottom:0;width:min(76vw,1160px);overflow:hidden;
-  -webkit-mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.32) 34%,#000 68%,#000 100%);
-  mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.32) 34%,#000 68%,#000 100%)}
+/* no width cap here — h1 and .hc-lead carry their own; a parent cap was
+   silently forcing long headlines to 3 lines and unequal band heights */
+.hc-pagehead.hc-split .hc-headtext{position:relative;z-index:2}
+.hc-headimg{position:absolute;right:-120px;top:0;bottom:0;width:min(76vw,1160px);overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.32) 26%,#000 54%,#000 100%);
+  mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.32) 26%,#000 54%,#000 100%)}
 /* blend tint dies out by ~2/3 across — the far corner is the photo at full
    fidelity, only the text side wears the blue veil */
-.hc-headimg::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,42,94,.62),rgba(0,42,94,.3) 38%,rgba(0,42,94,0) 68%)}
+.hc-headimg::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,42,94,.62),rgba(0,42,94,.28) 28%,rgba(0,42,94,0) 52%)}
 .hc-headimg img{width:100%;height:100%;object-fit:cover;filter:saturate(1.08) contrast(1.04);animation:hcKenburns 20s ease-in-out infinite alternate}
 @keyframes hcKenburns{from{transform:scale(1)}to{transform:scale(1.08)}}
 @media(max-width:880px){
-  .hc-headimg{position:relative;width:100%;height:200px;margin-top:-8px;
+  .hc-headimg{position:relative;right:auto;width:100%;height:200px;margin-top:-8px;
     -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 22%,#000 100%);
     mask-image:linear-gradient(180deg,transparent 0,#000 22%,#000 100%)}
 }
@@ -56,7 +62,7 @@
 .hc-crumb b{color:#dbe8fa;font-weight:600}
 .hc-crumb a:hover{color:#fff}
 .hc-pagehead .hc-kick{font-family:var(--font-display);font-weight:700;font-size:.72rem;letter-spacing:.26em;text-transform:uppercase;color:var(--accent-light)}
-.hc-pagehead h1{font-size:clamp(2rem,4vw,3.2rem);font-weight:900;margin:12px 0 14px;max-width:20ch}
+.hc-pagehead h1{font-size:clamp(2rem,4vw,3.2rem);font-weight:900;margin:12px 0 14px;max-width:26ch}
 .hc-pagehead .hc-lead{color:#cfe0f5;max-width:56ch}
 /* CSS-only entrance (no hydration dependency -> no flash; RM kills it, 'both'
    keeps the end state visible either way) */
@@ -74,6 +80,70 @@
 .hc-vimg{border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-lg);border:1px solid var(--line);height:340px}
 .hc-vimg img{width:100%;height:100%;object-fit:cover;transition:transform .6s var(--ease)}
 .hc-vimg:hover img{transform:scale(1.04)}
+
+/* four-pillar strip (approved profile §01) — hairline cards whose keyword
+   ignites to accent as each card reveals; hover lifts like the proof cards */
+.hc-pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:clamp(34px,4.5vw,56px)}
+.hc-pillar{border:1px solid var(--line);border-radius:var(--r-md);padding:18px 20px;background:#fff;
+  transition:transform .3s var(--ease),box-shadow .3s,border-color .3s}
+.hc-pillar b{font-family:var(--font-display);font-weight:800;letter-spacing:.02em;color:var(--line-strong,#b9c6d8);
+  display:block;margin-bottom:4px;transition:color .6s var(--ease) .15s}
+.hc-pillar.hc-in b{color:var(--success)}
+.hc-pillar p{font-size:.82rem;color:var(--muted);margin:0}
+.hc-pillar:hover{transform:translateY(-3px);box-shadow:var(--shadow-sm);border-color:var(--success)}
+@media(max-width:880px){.hc-pillars{grid-template-columns:repeat(2,1fr)}}
+
+/* first-launch spotlight card — brand logo chip + one-line hook + CTA; the
+   whole card is the link (same pattern as the mockform card) */
+.hc-spot{display:flex;align-items:center;gap:clamp(16px,2.5vw,28px);margin-top:clamp(30px,4vw,48px);
+  background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:18px clamp(18px,2.5vw,28px);
+  box-shadow:var(--shadow-sm);transition:transform .3s var(--ease),box-shadow .3s,border-color .3s}
+.hc-spot:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:var(--success)}
+.hc-spotlogo{flex:0 0 auto;width:132px;height:64px;display:grid;place-items:center;overflow:hidden;
+  border-radius:var(--r-md);border:1px solid var(--line);background:#fff}
+.hc-spotlogo img{max-width:86%;max-height:82%;object-fit:contain}
+.hc-spottext{flex:1}
+.hc-spottext b{font-family:var(--font-display);display:block;margin-bottom:2px}
+.hc-spottext span{font-size:.87rem;color:var(--muted)}
+.hc-spotcta{flex:0 0 auto;font-weight:700;color:var(--success);white-space:nowrap;transition:transform .3s var(--ease)}
+.hc-spot:hover .hc-spotcta{transform:translateX(4px)}
+@media(max-width:880px){.hc-spot{flex-wrap:wrap}.hc-spotcta{margin-left:auto}}
+
+/* honest-state molecule table (APIs) — real structure, shimmering skeleton
+   rows until the fact sheet confirms the list; sits on the dark band.
+   ⟲ RM: global rule freezes the shimmer (rows read as static placeholders) */
+.hc-moltable{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);border-radius:var(--r-lg);
+  padding:22px clamp(18px,2.2vw,28px);backdrop-filter:blur(4px)}
+.hc-molhead{display:grid;grid-template-columns:1.4fr 1fr 1fr .7fr;gap:14px;padding-bottom:12px;
+  border-bottom:1px solid rgba(255,255,255,.18);font-family:var(--font-display);font-weight:700;
+  font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-light)}
+.hc-molrow{display:grid;grid-template-columns:1.4fr 1fr 1fr .7fr;gap:14px;padding:14px 0;
+  border-bottom:1px solid rgba(255,255,255,.08)}
+.hc-molrow i{height:12px;border-radius:6px;background:linear-gradient(90deg,rgba(255,255,255,.1) 25%,rgba(255,255,255,.28) 50%,rgba(255,255,255,.1) 75%);
+  background-size:200% 100%;animation:hcSkel 1.8s ease-in-out infinite}
+.hc-molrow:nth-child(3) i{animation-delay:.25s}
+.hc-molrow:nth-child(4) i{animation-delay:.5s}
+@keyframes hcSkel{from{background-position:200% 0}to{background-position:-200% 0}}
+.hc-molnote{padding-top:16px;font-size:.87rem;color:#cfe0f5}
+.hc-molnote a{color:var(--accent-light);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.hc-molnote a:hover{color:#fff}
+
+/* business hub — the four verticals as photo cards */
+.hc-bizgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;margin-top:36px;perspective:1100px}
+.hc-bizcard{display:block;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:24px;box-shadow:var(--shadow-sm);overflow:hidden;
+  transition:transform .25s var(--ease),box-shadow .25s,border-color .25s}
+.hc-bizcard:hover{transform:translateY(-4px) rotateX(1.2deg) rotateY(-1.2deg);box-shadow:var(--shadow-md);border-color:var(--success)}
+.hc-bizimg{position:relative;height:190px;margin:-24px -24px 18px;overflow:hidden}
+.hc-bizimg img{width:100%;height:100%;object-fit:cover;transition:transform .6s var(--ease)}
+.hc-bizcard:hover .hc-bizimg img{transform:scale(1.05)}
+.hc-bizno{position:absolute;left:16px;bottom:12px;font-family:var(--font-display);font-weight:900;
+  font-size:1.6rem;color:#fff;text-shadow:0 2px 14px rgba(0,20,50,.55)}
+.hc-bizcard b{font-family:var(--font-display);display:block;margin-bottom:6px;font-size:1.05rem}
+.hc-bizcard p{font-size:.9rem;color:var(--muted);margin-bottom:12px}
+.hc-bizcta{font-weight:700;color:var(--success);display:inline-block;transition:transform .3s var(--ease)}
+.hc-bizcard:hover .hc-bizcta{transform:translateX(4px)}
+@media(max-width:880px){.hc-bizgrid{grid-template-columns:1fr}}
 
 .hc-proof{background:var(--mist)}
 .hc-proof h2{font-size:clamp(1.6rem,2.8vw,2.2rem)}
