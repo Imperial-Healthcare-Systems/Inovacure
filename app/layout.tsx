@@ -55,6 +55,7 @@ export const viewport: Viewport = {
 const ORG_JSONLD = {
   "@context": "https://schema.org",
   "@type": "Organization",
+  "@id": "https://www.inovacure.in/#organization",
   name: "Inovacure Pharmaceuticals LLP",
   image: "https://www.inovacure.in/assets/logo-horizontal.png",
   description:
@@ -72,6 +73,18 @@ const ORG_JSONLD = {
   url: "https://www.inovacure.in/",
 };
 
+// WebSite entity — helps search engines model the site as a whole (separate
+// from the Organization above). A SearchAction is intentionally omitted until a
+// site-wide search endpoint exists (blog search is client-side today).
+const WEBSITE_JSONLD = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Inovacure Pharmaceuticals",
+  url: "https://www.inovacure.in/",
+  inLanguage: "en-IN",
+  publisher: { "@id": "https://www.inovacure.in/#organization" },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -87,6 +100,10 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSONLD) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_JSONLD) }}
         />
       </head>
       <body>{children}</body>

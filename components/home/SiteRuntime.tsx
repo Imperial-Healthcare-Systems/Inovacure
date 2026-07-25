@@ -14,6 +14,11 @@ import Lenis from "lenis";
 declare global {
   interface Window {
     __forceReveal?: () => void;
+    // Published so the blog TOC / anchor scrolling can route through Lenis
+    // instead of fighting it (native scrollIntoView jitters while Lenis owns
+    // the scroll position). Absent under reduced motion — callers fall back to
+    // native scroll. Mirrors the __forceReveal escape hatch above.
+    __lenis?: Lenis;
   }
 }
 
@@ -30,6 +35,7 @@ export default function SiteRuntime() {
       CustomEase.get("brand") ?? CustomEase.create("brand", "0.2,0.7,0.3,1");
 
     const lenis = new Lenis({ autoRaf: false });
+    window.__lenis = lenis; // expose for blog TOC/anchor scrolling (see decl above)
     lenis.on("scroll", ScrollTrigger.update);
     const tick = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(tick);
@@ -267,6 +273,7 @@ export default function SiteRuntime() {
       ctx.revert();
       gsap.ticker.remove(tick);
       lenis.destroy();
+      window.__lenis = undefined;
     };
   }, []);
 

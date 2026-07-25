@@ -14,6 +14,7 @@ const LINKS = [
   { label: "About", href: "/about", key: "about" },
   { label: "Quality", href: "/quality", key: "quality" },
   { label: "Partners", href: "/partners", key: "partners" },
+  { label: "Blog", href: "/blog", key: "blog" },
   { label: "Contact", href: "/contact", key: "contact" },
 ];
 
