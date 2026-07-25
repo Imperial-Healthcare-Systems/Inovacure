@@ -1,11 +1,13 @@
 import { defineCliConfig } from "sanity/cli";
-import { dataset, projectId } from "./sanity/env";
 
-// Used by the Sanity CLI for TypeGen:
-//   npx sanity@latest schema extract
-//   npx sanity@latest typegen generate
-// Config lives in sanity-typegen.json (query + schema paths).
+// Used by the Sanity CLI (TypeGen + `sanity deploy`). projectId/dataset are
+// public values (also shipped in the browser bundle), so a hardcoded fallback
+// is safe and lets `npx sanity deploy` work in a bare terminal without loading
+// the Next env files. Env vars still override for other environments.
 export default defineCliConfig({
-  api: { projectId, dataset },
+  api: {
+    projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "1lhrxq6h",
+    dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || "production",
+  },
   autoUpdates: true,
 });
