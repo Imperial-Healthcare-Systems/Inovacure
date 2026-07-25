@@ -25,22 +25,31 @@ and ships production SEO (metadata, JSON-LD, sitemap, robots, RSS, OG images).
      `NEXT_PUBLIC_SANITY_API_VERSION`
    - `SANITY_API_READ_TOKEN` (API → Tokens, Viewer) — enables draft preview
    - `SANITY_REVALIDATE_SECRET` (any random string; also set on the webhook)
-   - `SANITY_STUDIO_ENABLED=true` **only** where editors work (see Studio below)
-3. In Sanity → API → CORS origins, add your site origin(s).
+3. In Sanity → API → CORS origins, add `http://localhost:3001` for local dev
+   (the hosted studio's origin is managed by Sanity automatically).
 4. Regenerate types after schema changes: `npm run typegen`.
 
 Until configured, the blog builds and renders graceful empty states — nothing
 breaks.
 
-## The Studio (`/studio`)
+## The Studio (editor UI)
 
-Embedded but **gated and non-discoverable** by three layers:
-1. **Env gate** — the route 404s unless `SANITY_STUDIO_ENABLED === "true"`
-   (`app/studio/[[...tool]]/page.tsx`, mirroring `/store`'s flag pattern).
-2. **noindex** metadata + it is never linked from any nav/footer/sitemap.
-3. **Sanity login** gates all editing regardless.
+The editor is a **Sanity-hosted studio**, deployed separately from the public
+site so nothing studio-related is reachable on the marketing domain:
 
-Enable it on a protected/admin deploy or locally; keep it off on the public site.
+```
+npx sanity login      # once, in a terminal
+npx sanity deploy     # choose hostname e.g. "inovacure" → inovacure.sanity.studio
+```
+
+- The client opens `https://<host>.sanity.studio`, logs in, and edits. It is
+  fully login-gated and separate from the public site.
+- **Give the client access:** sanity.io/manage → project → Members → Invite →
+  their email, role **Editor**. They accept + create a free Sanity login.
+- Redeploy the studio after schema changes with `npx sanity deploy`.
+
+There is no in-app `/studio` route — the studio is not part of the public
+Next.js build.
 
 ## Editorial lifecycle
 
@@ -71,7 +80,7 @@ Sanity → API → Webhooks → Create:
 | Area | Path |
 |---|---|
 | Sanity schemas | `sanity/schemas/*` (post, author, category, tag, objects/*) |
-| Studio config | `sanity.config.ts`, gated route `app/studio/[[...tool]]/*` |
+| Studio config | `sanity.config.ts` (deployed via `npx sanity deploy`) |
 | Data-access layer (only place that queries Sanity) | `lib/blog/*` |
 | GROQ queries | `lib/blog/queries.ts` |
 | Fetchers (public API) | `lib/blog/posts.ts` |

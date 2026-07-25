@@ -1,16 +1,13 @@
-"use client";
-
 import { defineConfig } from "sanity";
 import { structureTool } from "sanity/structure";
 import { visionTool } from "@sanity/vision";
 import { schemaTypes } from "./sanity/schemas";
 import { apiVersion, dataset, projectId } from "./sanity/env";
 
-// Embedded Studio configuration (mounted at /studio, env-gated). The Studio is
-// only ever reached with SANITY_STUDIO_ENABLED === "true" AND a valid project
-// id, so an empty projectId here is harmless at build time.
+// Studio configuration. Deployed as a standalone Sanity-hosted studio via
+// `npx sanity deploy` → <hostname>.sanity.studio (login-gated, separate from
+// the public site). No basePath: the hosted studio serves at the subdomain root.
 export default defineConfig({
-  basePath: "/studio",
   projectId,
   dataset,
   schema: { types: schemaTypes },

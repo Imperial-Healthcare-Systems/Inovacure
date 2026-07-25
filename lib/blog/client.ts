@@ -32,7 +32,10 @@ function getClient(preview: boolean): SanityClient | null {
     projectId,
     dataset,
     apiVersion,
-    useCdn: true,
+    // CDN for anonymous public-dataset reads; when a read token is present the
+    // API is used instead, so reads work even if the dataset is private.
+    useCdn: !readToken,
+    token: readToken || undefined,
     perspective: "published",
     stega: false,
   });
