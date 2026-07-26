@@ -1,4 +1,4 @@
-import SanityImage from "./SanityImage";
+import BlogImage from "./BlogImage";
 import { CategoryBadge } from "./Badges";
 import { formatDate, readingLabel } from "@/lib/blog/format";
 import type { PostCard } from "@/lib/blog/types";
@@ -20,7 +20,7 @@ export default function ArticleCard({
     <article className="hc-artcard" {...(reveal ? { "data-reveal": true } : {})}>
       <a href={`/blog/${post.slug}`} className="hc-artcard-link">
         <span className="hc-artcard-media">
-          <SanityImage image={post.coverImage} ratio={16 / 10} sizes={sizes} />
+          <BlogImage image={post.coverImage} ratio={16 / 10} sizes={sizes} />
           {category && <span className="hc-pbadge hc-catbadge-static">{category.title}</span>}
         </span>
         <span className="hc-artcard-body">

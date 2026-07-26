@@ -1,25 +1,20 @@
-// Hand-authored view models — the source of truth for the exact shapes our GROQ
-// projections return. Fetchers type their results against these so nothing
-// `any` from Sanity leaks into routes/components. (Regenerate/compare with
-// `npm run typegen`, which emits query-result types from the schema.)
+// Hand-authored view models — the source of truth for the shapes the blog data
+// layer returns. Posts are authored as Markdown files in `content/blog/*.md`
+// (frontmatter + body); `lib/blog/source.ts` parses them into these models so
+// nothing untyped leaks into routes/components.
 
-import type { PortableTextBlock } from "@portabletext/react";
-
-export type SanityImageRef = {
-  _type: "image" | "figure";
-  asset?: { _ref: string; _type: "reference" };
-  hotspot?: { x: number; y: number; height: number; width: number };
-  crop?: { top: number; bottom: number; left: number; right: number };
-  alt?: string;
-  caption?: string;
-};
-
-export type CoverImage = SanityImageRef & {
+/** A local image referenced from Markdown frontmatter. `src` is a path under
+ *  /public (e.g. "/blog/cover.webp") or an absolute URL. */
+export type BlogImage = {
+  src: string;
   alt: string;
   caption?: string;
-  lqip?: string;
+  /** width/height ratio for the fixed media well; defaults to 16/9. */
   aspectRatio?: number;
 };
+
+/** Kept as an alias so existing component prop names read naturally. */
+export type CoverImage = BlogImage;
 
 export type TaxonomyRef = {
   title: string;
@@ -38,7 +33,7 @@ export type AuthorCardModel = {
 export type AuthorFullModel = AuthorCardModel & {
   role?: string;
   bio?: string;
-  avatar?: SanityImageRef;
+  avatar?: BlogImage;
 };
 
 /** Lean shape for listing/grids/related — never includes the body. */
@@ -62,18 +57,21 @@ export type PostSeo = {
   metaTitle?: string;
   metaDescription?: string;
   canonicalUrl?: string;
-  ogImage?: SanityImageRef;
+  ogImage?: BlogImage;
   noIndex?: boolean;
 };
 
-/** Full article — adds body, faqs, resolved author, seo, updatedAt. */
+export type TocEntry = { id: string; text: string; level: 2 | 3 };
+
+/** Full article — adds the rendered body (+ its TOC), faqs, resolved author,
+ *  seo, updatedAt. `bodyHtml` is pre-rendered Markdown; `toc` is derived from
+ *  its h2/h3 headings so anchors always match. */
 export type Post = Omit<PostCard, "author"> & {
   updatedAt: string;
-  body: PortableTextBlock[];
+  bodyHtml: string;
+  toc: TocEntry[];
   faqs?: FaqItem[];
   author: AuthorFullModel;
   seo?: PostSeo;
   relatedManual?: PostCard[];
 };
-
-export type TocEntry = { id: string; text: string; level: 2 | 3 };

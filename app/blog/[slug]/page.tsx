@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { draftMode } from "next/headers";
 
 import SiteHeader from "@/components/site/SiteHeader";
 import Footer from "@/components/home/sections/Footer";
 import Breadcrumbs from "@/components/blog/Breadcrumbs";
 import ArticleMeta from "@/components/blog/ArticleMeta";
-import SanityImage from "@/components/blog/SanityImage";
-import PortableTextBody from "@/components/blog/PortableText";
+import BlogImage from "@/components/blog/BlogImage";
 import TableOfContents from "@/components/blog/TableOfContents";
 import ReadingProgress from "@/components/blog/ReadingProgress";
 import ShareButtons from "@/components/blog/ShareButtons";
@@ -16,7 +14,6 @@ import RelatedArticles from "@/components/blog/RelatedArticles";
 import { TagList } from "@/components/blog/Badges";
 
 import { getAllPostSlugs, getPostBySlug, getRelatedPosts } from "@/lib/blog/posts";
-import { buildHeadingIndex } from "@/lib/blog/toc";
 import { buildPostJsonLd, buildPostMetadata, isDraft } from "@/lib/blog/metadata";
 
 // Static params from published slugs; new posts fall back to ISR (dynamicParams).
@@ -42,14 +39,13 @@ export default async function ArticlePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const { isEnabled: preview } = await draftMode();
 
-  const post = await getPostBySlug(slug, preview);
+  const post = await getPostBySlug(slug);
   if (!post) notFound();
-  // Drafts (future-dated / unpublished) are visible only in preview mode.
-  if (isDraft(post) && !preview) notFound();
+  // Drafts (future-dated / unpublished) are not publicly visible.
+  if (isDraft(post)) notFound();
 
-  const { toc, idByKey } = buildHeadingIndex(post.body);
+  const toc = post.toc;
   const related = await getRelatedPosts(post, 3);
   const category = post.categories?.[0];
   const jsonLd = buildPostJsonLd(post);
@@ -62,10 +58,6 @@ export default async function ArticlePage({
       />
       <SiteHeader active="blog" />
       <ReadingProgress targetId="article-body" />
-
-      {preview && isDraft(post) && (
-        <div className="hc-draft-banner">Draft preview — not publicly visible</div>
-      )}
 
       <header className="hc-pagehead hc-arthead">
         <div className="hc-arc" aria-hidden="true"></div>
@@ -88,9 +80,9 @@ export default async function ArticlePage({
         <div className="wrap">
           <ArticleMeta post={post} />
 
-          {post.coverImage?.asset && (
+          {post.coverImage?.src && (
             <figure className="hc-article-cover" data-reveal>
-              <SanityImage
+              <BlogImage
                 image={post.coverImage}
                 priority
                 sizes="(max-width: 1320px) 100vw, 1320px"
@@ -109,7 +101,7 @@ export default async function ArticlePage({
             </div>
 
             <div className="hc-prose" id="article-body">
-              <PortableTextBody value={post.body} idByKey={idByKey} />
+              <div dangerouslySetInnerHTML={{ __html: post.bodyHtml }} />
 
               {post.faqs && post.faqs.length > 0 && (
                 <section className="hc-prose-faqsection">

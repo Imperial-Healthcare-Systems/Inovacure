@@ -1,11 +1,12 @@
 "use client";
 
 // Intent-segmented enquiry panel (brief: export buyers · distributors/PCD ·
-// doctors/prescribers · general). INTERIM submit: composes a pre-filled
-// email to info@inovacure.in — honest and functional without a backend; the
-// live capture (server action, then Supabase) lands in the enquiry-system
-// beat and swaps in behind this same UI.
+// doctors/prescribers · general). Submitting persists to Supabase via a server
+// action when the DB is configured; if it isn't (or the write fails), it falls
+// back to composing a pre-filled email to info@inovacure.in — so the form always
+// works. The UI is unchanged either way.
 import { useState } from "react";
+import { submitEnquiry } from "@/lib/actions/enquiry";
 
 const TRACKS = [
   {
@@ -42,14 +43,48 @@ export default function EnquiryPanel() {
   const [track, setTrack] = useState(TRACKS[0]);
   const [name, setName] = useState("");
   const [org, setOrg] = useState("");
+  const [email, setEmail] = useState("");
   const [msg, setMsg] = useState("");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   const mailto = () => {
     const subject = encodeURIComponent(`[${track.subject}] ${org || name}`);
     const body = encodeURIComponent(
-      `Name: ${name}\nOrganisation: ${org}\nTrack: ${track.label}\n\n${msg}`,
+      `Name: ${name}\nOrganisation: ${org}\nEmail: ${email}\nTrack: ${track.label}\n\n${msg}`,
     );
     return `mailto:info@inovacure.in?subject=${subject}&body=${body}`;
+  };
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus("sending");
+    try {
+      const res = await submitEnquiry({
+        track: track.key,
+        name,
+        organisation: org,
+        email,
+        message: msg,
+      });
+      if (res.ok) {
+        setStatus("sent");
+        setName("");
+        setOrg("");
+        setEmail("");
+        setMsg("");
+        return;
+      }
+      // Not configured yet (or a write error) → fall back to the email compose.
+      if (res.reason === "unconfigured" || res.reason === "error") {
+        window.location.href = mailto();
+        setStatus("idle");
+        return;
+      }
+      setStatus("error"); // validation
+    } catch {
+      window.location.href = mailto();
+      setStatus("idle");
+    }
   };
 
   return (
@@ -68,13 +103,7 @@ export default function EnquiryPanel() {
           </button>
         ))}
       </div>
-      <form
-        className="hc-enqform"
-        onSubmit={(e) => {
-          e.preventDefault();
-          window.location.href = mailto();
-        }}
-      >
+      <form className="hc-enqform" onSubmit={onSubmit}>
         <label>
           <span>Name</span>
           <input
@@ -92,6 +121,15 @@ export default function EnquiryPanel() {
             placeholder="Clinic, pharmacy, company…"
           />
         </label>
+        <label>
+          <span>Email</span>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+          />
+        </label>
         <label className="hc-wide">
           <span>Message</span>
           <textarea
@@ -103,13 +141,19 @@ export default function EnquiryPanel() {
           />
         </label>
         <div className="hc-wide hc-enqfoot">
-          <button className="btn btn-primary" type="submit">
-            Compose your enquiry
+          <button className="btn btn-primary" type="submit" disabled={status === "sending"}>
+            {status === "sending" ? "Sending…" : "Send your enquiry"}
           </button>
-          <small>
-            Opens your email app addressed to info@inovacure.in with your
-            message ready to send — nothing is stored on this site.
-          </small>
+          {status === "sent" ? (
+            <small>Thanks — your enquiry has reached our team. We&rsquo;ll be in touch.</small>
+          ) : status === "error" ? (
+            <small>Please add your name and a short message, then try again.</small>
+          ) : (
+            <small>
+              We&rsquo;ll record your enquiry and get back to you. If our system
+              isn&rsquo;t reachable, this opens your email app to info@inovacure.in instead.
+            </small>
+          )}
         </div>
       </form>
     </div>

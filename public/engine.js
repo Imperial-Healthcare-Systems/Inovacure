@@ -424,13 +424,13 @@ async function sha256(str){
 // lightweight sync hash for shopper prototype passwords
 function weakHash(str){ let h=5381; for(let i=0;i<str.length;i++){ h=((h<<5)+h)+str.charCodeAt(i);} return 'h'+(h>>>0).toString(16); }
 
-/* admin password — hashed on boot, plaintext discarded, never in page source */
-// PROD: this comparison happens server-side against bcrypt; here we hash the
-// known framework password (A6 ADMIN_PASSWORD = IC@2026) once at boot.
-const ADMIN_PASSWORD_PLAINTEXT = 'IC@2026';   // A6 input — owner login password
-let ADMIN_PASS_HASH = null;
+/* Admin password hash is injected at runtime by the server /admin route as
+   window.__ADMIN_PASS_HASH__ (sourced from a gitignored env var); the plaintext
+   credential no longer ships in this client bundle.
+   PROD: replace the client-side comparison with real server-side auth (bcrypt + JWT). */
+let ADMIN_PASS_HASH = (typeof window !== 'undefined' && window.__ADMIN_PASS_HASH__)
+  ? String(window.__ADMIN_PASS_HASH__) : null;
 let ADMIN_OTP_EMAIL = SETTINGS.supportEmail;  // A6 ADMIN_OTP_EMAIL (resettable)
-(function initAdminHash(){ sha256(ADMIN_PASSWORD_PLAINTEXT).then(h=>{ ADMIN_PASS_HASH=h; }); })();
 
 let loginStage = 'password';   // 'password' | 'otp'
 let pendingOTP = null;
@@ -1594,7 +1594,7 @@ async function submitAdminPassword(){
   const val=$('#admPass').value||'';
   // hash entered password and compare to boot hash (constant target)
   const h=await sha256(val);
-  if(!ADMIN_PASS_HASH){ ADMIN_PASS_HASH=await sha256(ADMIN_PASSWORD_PLAINTEXT); }
+  if(!ADMIN_PASS_HASH){ loginError='Admin sign-in is not configured on this deployment.'; renderLogin(); return; }
   if(h!==ADMIN_PASS_HASH){ loginError='Incorrect password.'; renderLogin(); return; }
   loginError='';
   issueOtp();
@@ -1621,7 +1621,7 @@ function submitAdminOtp(){
   loginStage='password'; pendingOTP=null; loginError='';
   logAudit('admin.login','session', owner.name+' signed in');
   persistAll();
-  location.hash='#/admin';
+  if(!onAdminRoute()) location.hash='#/admin';
   showView('admin');
   adminGo('dashboard');
   toast('Signed in to admin','ok');
@@ -2175,15 +2175,264 @@ function admReports(){
 
 /* ============================================================ CMS */
 function admCMS(){
-  return modHead('Content / CMS','Storefront copy & announcements')+
+  return modHead('Content / CMS','Storefront copy & blog posts')+
     `<div class="admin-card adm-form" style="max-width:680px">
       <div class="field"><label>Announcement bar</label><input id="cmsAnn" value="${escapeHtml(CMS.announcement)}"></div>
       <div class="field"><label>Hero title</label><input id="cmsHero" value="${escapeHtml(CMS.heroTitle)}"></div>
       <div class="field"><label>Return policy line</label><input id="cmsRet" value="${escapeHtml(CMS.returnPolicy)}"></div>
       <button class="btn btn-primary" onclick="saveCMS()">Save content</button>
+    </div>`+
+    admBlog();
+}
+// After the CMS tab paints, hydrate the blog editor's async hints (existing-slug
+// collision list + cover-image existence). Additive: leaves admCMS()'s markup untouched.
+admCMS._after=function(){
+  if(!blogState.editing) return;
+  ensureBlogSlugs();
+  blogOnTitle();
+  if(blogState.editing.coverSrc) blogCheckCover(blogState.editing.coverSrc);
+};
+function saveCMS(){ CMS.announcement=$('#cmsAnn').value; CMS.heroTitle=$('#cmsHero').value; CMS.returnPolicy=$('#cmsRet').value; SETTINGS.returnPolicy=CMS.returnPolicy; persist('cms',CMS); persist('settings',SETTINGS); logAudit('cms.edit','content',''); toast('Content saved','ok'); }
+
+/* ============================================================ BLOG COMPOSER
+   Authoring UI for the file-based blog (content/blog/*.md). It NEVER publishes
+   by itself: it produces valid frontmatter+Markdown and either (A) downloads the
+   .md for the author to commit, or (B) POSTs it to the dev-only /api/blog-draft
+   writer. All three known build-breakers are made unproducible here (tags/dates
+   always quoted; raw HTML blocked). Everything below is additive. */
+let blogState={ editing:null, slugs:null };
+
+function admBlog(){ return blogState.editing ? blogEditorHTML(blogState.editing) : blogListHTML(); }
+
+function blogListHTML(){
+  const drafts=dbLoad('blogDrafts',[]);
+  const rows=drafts.length ? drafts.map(d=>`<div class="info-line">
+      <span>${escapeHtml(d.title||'(untitled)')} <small style="color:var(--muted)">/blog/${escapeHtml(blogSlug(d.title||''))||'—'}</small></span>
+      <span style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="blogEdit('${d.id}')">Edit</button>
+        <button class="btn btn-ghost" onclick="blogDelete('${d.id}')">Delete</button>
+      </span></div>`).join('') : `<div class="info-line"><span style="color:var(--muted)">No saved drafts yet.</span><span></span></div>`;
+  return `<div class="admin-card" style="max-width:680px;margin-top:18px">
+    <div class="mod-head" style="margin-bottom:10px"><div><h1 style="font-size:1.15rem">Blog posts</h1>
+      <p>Compose a post for <code>content/blog</code>. Saving does not publish — see the notes after you save.</p></div>
+      <button class="btn btn-primary" onclick="blogNew()">New blog post</button></div>
+    ${rows}
+  </div>`;
+}
+
+function blogBlank(){ return { id:'bd'+Date.now(), title:'',excerpt:'',publishedAt:todayISO().slice(0,10),updatedAt:'',featured:false,
+  coverSrc:'',coverAlt:'',coverCaption:'',authorName:'',authorRole:'',authorBio:'',
+  categories:'',tags:'',metaTitle:'',metaDescription:'',faqs:'',body:'' }; }
+
+function blogNew(){ blogState.editing=blogBlank(); adminGo('cms'); }
+function blogEdit(id){ const d=dbLoad('blogDrafts',[]).find(x=>x.id===id); blogState.editing=d?{...blogBlank(),...d}:blogBlank(); adminGo('cms'); }
+function blogDelete(id){ const list=dbLoad('blogDrafts',[]).filter(x=>x.id!==id); dbSave('blogDrafts',list); toast('Draft deleted'); adminGo('cms'); }
+function blogCancel(){ blogState.editing=null; adminGo('cms'); }
+
+/* ---- slug + collision ---- */
+function blogSlug(input){ return String(input||'').toLowerCase().trim().replace(/[^\w\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,''); }
+function ensureBlogSlugs(){
+  if(blogState.slugs) { blogRefreshSlugMsg(); return; }
+  fetch('/api/blog-draft').then(r=>r.ok?r.json():null).then(j=>{
+    if(j&&Array.isArray(j.slugs)){ blogState.slugs=j.slugs; blogRefreshSlugMsg(); }
+    else blogSlugsFromSitemap();
+  }).catch(blogSlugsFromSitemap);
+}
+function blogSlugsFromSitemap(){
+  fetch('/sitemap.xml').then(r=>r.ok?r.text():'').then(xml=>{
+    const slugs=[]; const re=/\/blog\/([a-z0-9-]+)<\/loc>/g; let m; while((m=re.exec(xml))) slugs.push(m[1]);
+    blogState.slugs=slugs; blogRefreshSlugMsg();
+  }).catch(()=>{ blogState.slugs=[]; blogRefreshSlugMsg(); });
+}
+function blogRefreshSlugMsg(){
+  const el=$('#blogSlugMsg'); if(!el) return;
+  const slug=blogSlug($('#blogTitle')?$('#blogTitle').value:'');
+  const sv=$('#blogSlugVal'); if(sv) sv.textContent=slug||'—';
+  if(!slug){ el.textContent=''; return; }
+  if(!blogState.slugs){ el.textContent='checking…'; el.style.color='var(--muted)'; return; }
+  const taken=blogState.slugs.includes(slug);
+  el.textContent=taken?'⚠ already exists — change the title':'✓ available';
+  el.style.color=taken?'#c0392b':'var(--primary-dark)';
+}
+function blogOnTitle(){ blogRefreshSlugMsg(); }
+function blogCheckCover(src){
+  const el=$('#blogCoverMsg'); if(!el) return;
+  src=(src||'').trim();
+  if(!src){ el.textContent=''; return; }
+  if(!/^\//.test(src)){ el.textContent='must be a path under /public (e.g. /assets/…)'; el.style.color='#c0392b'; return; }
+  el.textContent='checking…'; el.style.color='var(--muted)';
+  fetch(src,{method:'HEAD'}).then(r=>{ el.textContent=r.ok?'✓ file found':'⚠ not found — add it under /public before publishing'; el.style.color=r.ok?'var(--primary-dark)':'#c0392b'; })
+    .catch(()=>{ el.textContent='⚠ could not verify'; el.style.color='#c0392b'; });
+}
+
+/* ---- collect + validate + generate ---- */
+function bv(id){ const el=$('#'+id); return el?el.value:''; }
+function blogCollect(){
+  return { id:blogState.editing?blogState.editing.id:('bd'+Date.now()),
+    title:bv('blogTitle'), excerpt:bv('blogExcerpt'), publishedAt:bv('blogDate'), updatedAt:bv('blogUpdated'),
+    featured:$('#blogFeatured')?$('#blogFeatured').checked:false,
+    coverSrc:bv('blogCover'), coverAlt:bv('blogCoverAlt'), coverCaption:bv('blogCoverCap'),
+    authorName:bv('blogAuthor'), authorRole:bv('blogRole'), authorBio:bv('blogBio'),
+    categories:bv('blogCats'), tags:bv('blogTags'),
+    metaTitle:bv('blogMetaTitle'), metaDescription:bv('blogMetaDesc'),
+    faqs:bv('blogFaqs'), body:bv('blogBody') };
+}
+function blogListVals(csv){ return String(csv||'').split(',').map(x=>x.trim()).filter(Boolean); }
+function blogFaqVals(text){ return String(text||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{ const i=l.indexOf('::'); if(i<0) return null; return {q:l.slice(0,i).trim(), a:l.slice(i+2).trim()}; }).filter(f=>f&&f.q&&f.a); }
+function blogValidate(d){
+  const e=[];
+  if(!d.title.trim()) e.push('Title is required');
+  if(!d.excerpt.trim()) e.push('Excerpt is required');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test((d.publishedAt||'').trim())) e.push('Publish date is required (YYYY-MM-DD)');
+  if(d.updatedAt && !/^\d{4}-\d{2}-\d{2}$/.test(d.updatedAt.trim())) e.push('Updated date must be YYYY-MM-DD');
+  if(!d.coverSrc.trim()) e.push('Cover image path is required');
+  else if(!/^\//.test(d.coverSrc.trim())) e.push('Cover image must be a path under /public (start with /)');
+  if(!blogListVals(d.categories).length) e.push('At least one category is required');
+  // block raw HTML in the body (ignore inline code spans). Raw <table> in
+  // particular breaks the build; any raw tag is rejected to be safe.
+  const bodyNoCode=String(d.body||'').replace(/`[^`]*`/g,'').replace(/```[\s\S]*?```/g,'');
+  const tag=bodyNoCode.match(/<\/?[a-zA-Z][a-zA-Z0-9-]*(?:\s[^>]*)?\/?>/);
+  if(tag) e.push('Remove raw HTML from the body ("'+tag[0].slice(0,32)+'") — use Markdown. Raw <table> breaks the article layout.');
+  const slug=blogSlug(d.title);
+  if(!slug) e.push('Title does not produce a valid slug');
+  else if(blogState.slugs && blogState.slugs.includes(slug)) e.push('A post with slug "'+slug+'" already exists — change the title');
+  return e;
+}
+function blogYaml(s){ return '"'+String(s==null?'':s).replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/\s*\r?\n\s*/g,' ').trim()+'"'; }
+function blogToMarkdown(d){
+  const cats=blogListVals(d.categories), tags=blogListVals(d.tags), faqs=blogFaqVals(d.faqs);
+  let fm='---\n';
+  fm+='title: '+blogYaml(d.title)+'\n';
+  fm+='excerpt: '+blogYaml(d.excerpt)+'\n';
+  fm+='publishedAt: '+blogYaml(d.publishedAt)+'\n';         // always quoted → stays a string
+  if(d.updatedAt) fm+='updatedAt: '+blogYaml(d.updatedAt)+'\n';
+  if(d.featured) fm+='featured: true\n';
+  fm+='coverImage:\n  src: '+blogYaml(d.coverSrc)+'\n  alt: '+blogYaml(d.coverAlt||d.title)+'\n';
+  if(d.coverCaption) fm+='  caption: '+blogYaml(d.coverCaption)+'\n';
+  if(d.authorName){ fm+='author:\n  name: '+blogYaml(d.authorName)+'\n'; if(d.authorRole) fm+='  role: '+blogYaml(d.authorRole)+'\n'; if(d.authorBio) fm+='  bio: '+blogYaml(d.authorBio)+'\n'; }
+  fm+='categories:\n'+cats.map(c=>'  - '+blogYaml(c)).join('\n')+'\n';    // each quoted → never a bare scalar
+  if(tags.length) fm+='tags:\n'+tags.map(t=>'  - '+blogYaml(t)).join('\n')+'\n';
+  if(faqs.length) fm+='faqs:\n'+faqs.map(f=>'  - question: '+blogYaml(f.q)+'\n    answer: '+blogYaml(f.a)).join('\n')+'\n';
+  if(d.metaTitle||d.metaDescription){ fm+='seo:\n'; if(d.metaTitle) fm+='  metaTitle: '+blogYaml(d.metaTitle)+'\n'; if(d.metaDescription) fm+='  metaDescription: '+blogYaml(d.metaDescription)+'\n'; }
+  fm+='---\n\n'+String(d.body||'').replace(/\r\n/g,'\n').trim()+'\n';
+  return fm;
+}
+
+/* ---- actions ---- */
+function blogSaveDraft(){ const d=blogCollect(); const list=dbLoad('blogDrafts',[]).filter(x=>x.id!==d.id); list.unshift(d); dbSave('blogDrafts',list); blogState.editing=d; toast('Draft saved locally','ok'); }
+function blogShowErrors(errs){
+  const el=$('#blogErrors');
+  if(el){ el.innerHTML='<b>Fix before saving:</b>'+errs.map(e=>'<div>• '+escapeHtml(e)+'</div>').join(''); el.style.display='block'; el.scrollIntoView({behavior:'smooth',block:'center'}); }
+  toast(errs.length+' issue'+(errs.length>1?'s':'')+' to fix','err');
+}
+function blogPreview(){
+  const d=blogCollect(); const errs=blogValidate(d); const md=blogToMarkdown(d);
+  openModal(`<div class="modal-head"><h3>Markdown preview — /blog/${escapeHtml(blogSlug(d.title))||'?'}</h3><button class="panel-close" onclick="closeModal()">&times;</button></div>
+    <div class="modal-body">
+      ${errs.length?`<div style="background:#fef5f6;border:1px solid #d9808c;color:#8a1f2b;padding:12px 14px;border-radius:10px;margin-bottom:12px;font-size:.85rem">${errs.map(e=>'• '+escapeHtml(e)).join('<br>')}</div>`:''}
+      <pre style="max-height:52vh;overflow:auto;background:var(--ink);color:#e6edf6;padding:14px;border-radius:10px;font-size:.82rem;white-space:pre-wrap">${escapeHtml(md)}</pre>
+    </div>`);
+}
+function blogExport(){
+  const d=blogCollect(); const errs=blogValidate(d); if(errs.length){ blogShowErrors(errs); return; }
+  blogSaveDraft();
+  const slug=blogSlug(d.title); downloadTextFile(slug+'.md', blogToMarkdown(d), 'text/markdown');
+  const future=new Date(d.publishedAt)>new Date();
+  openModal(blogDoneModal({slug,mode:'export',future}));
+}
+async function blogSaveProject(){
+  const d=blogCollect(); const errs=blogValidate(d); if(errs.length){ blogShowErrors(errs); return; }
+  blogSaveDraft();
+  const slug=blogSlug(d.title), md=blogToMarkdown(d);
+  let res; try{ res=await fetch('/api/blog-draft',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug,markdown:md})}); }
+  catch(err){ toast('Could not reach the local writer','err'); return; }
+  let j={}; try{ j=await res.json(); }catch(e){}
+  if(res.status===404){ openModal(blogNoApiModal(slug, md)); return; }
+  if(!res.ok||!j.ok){ blogShowErrors([j.error||('Save failed ('+res.status+')')]); return; }
+  if(blogState.slugs && !blogState.slugs.includes(slug)) blogState.slugs.push(slug);
+  openModal(blogDoneModal({slug,mode:'saved',future:!j.published,path:j.path}));
+}
+function downloadTextFile(filename,text,mime){
+  const blob=new Blob([text],{type:(mime||'text/plain')+';charset=utf-8'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=filename; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+function blogDoneModal(o){
+  const draftNote=o.future?`<p style="margin-top:10px"><b>This is a draft.</b> Its publish date is in the future, so it stays hidden from <code>/blog</code>, the sitemap and RSS until that date.</p>`:'';
+  const steps=o.mode==='saved'
+    ? `<p>Written to <code>${escapeHtml(o.path)}</code>.</p>
+       <p style="margin-top:10px">It is <b>not live yet.</b> To see it locally, <b>restart the dev server</b> (the blog is cached once per process). To publish on the live site, <b>commit the file and redeploy</b>.</p>`
+    : `<p>Downloaded <code>${escapeHtml(o.slug)}.md</code>.</p>
+       <p style="margin-top:10px">It is <b>not published.</b> Move it into <code>content/blog/</code>, then <b>commit and redeploy</b> (or restart dev to preview). Nothing goes live until that deploy.</p>`;
+  return `<div class="modal-head"><h3>Saved — not yet published</h3><button class="panel-close" onclick="closeModal()">&times;</button></div>
+    <div class="modal-body">${steps}${draftNote}
+      <button class="btn btn-primary" style="margin-top:16px" onclick="closeModal()">Got it</button></div>`;
+}
+function blogNoApiModal(slug, md){
+  window.__blogPendingMd={slug,md};
+  return `<div class="modal-head"><h3>Local writer unavailable</h3><button class="panel-close" onclick="closeModal()">&times;</button></div>
+    <div class="modal-body">
+      <p>The direct-to-disk writer only runs in local development (<code>next dev</code>); it is disabled here. Download the file and add it to <code>content/blog/</code> instead.</p>
+      <button class="btn btn-primary" style="margin-top:16px" onclick="downloadTextFile(window.__blogPendingMd.slug+'.md',window.__blogPendingMd.md,'text/markdown');closeModal()">Download ${escapeHtml(slug)}.md</button>
     </div>`;
 }
-function saveCMS(){ CMS.announcement=$('#cmsAnn').value; CMS.heroTitle=$('#cmsHero').value; CMS.returnPolicy=$('#cmsRet').value; SETTINGS.returnPolicy=CMS.returnPolicy; persist('cms',CMS); persist('settings',SETTINGS); logAudit('cms.edit','content',''); toast('Content saved','ok'); }
+
+function blogEditorHTML(d){
+  const fld=(id,label,val,ph)=>`<div class="field"><label>${label}</label><input id="${id}" value="${escapeHtml(val)}" placeholder="${ph||''}"></div>`;
+  return `<div class="admin-card adm-form" style="max-width:760px;margin-top:18px">
+    <div class="mod-head" style="margin-bottom:10px"><div><h1 style="font-size:1.15rem">${d.title?('Edit: '+escapeHtml(d.title)):'New blog post'}</h1>
+      <p>Fields marked * are required. A <b>future publish date makes it a draft</b> (hidden until that date).</p></div>
+      <button class="btn btn-ghost" onclick="blogCancel()">← Back</button></div>
+
+    <div id="blogErrors" style="display:none;background:#fef5f6;border:1px solid #d9808c;color:#8a1f2b;padding:12px 14px;border-radius:10px;margin-bottom:14px;font-size:.85rem"></div>
+
+    <div class="field"><label>Title *</label><input id="blogTitle" value="${escapeHtml(d.title)}" oninput="blogOnTitle()" placeholder="Digital Eye Strain: …"></div>
+    <div class="field" style="margin-top:-6px"><small style="color:var(--muted)">Slug: <code>/blog/<span id="blogSlugVal">—</span></code> &nbsp;<span id="blogSlugMsg"></span></small></div>
+
+    <div class="field"><label>Excerpt *</label><textarea id="blogExcerpt" rows="2" placeholder="One–two sentence summary (cards, meta, OG).">${escapeHtml(d.excerpt)}</textarea></div>
+
+    <div class="adm-grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field"><label>Publish date *</label><input id="blogDate" type="date" value="${escapeHtml(d.publishedAt)}"></div>
+      <div class="field"><label>Updated date</label><input id="blogUpdated" type="date" value="${escapeHtml(d.updatedAt)}"></div>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;margin:4px 0 12px"><input type="checkbox" id="blogFeatured" ${d.featured?'checked':''}> Feature this post on the blog index</label>
+
+    <div class="field"><label>Cover image path * (under /public)</label><input id="blogCover" value="${escapeHtml(d.coverSrc)}" placeholder="/assets/imagery/consult-at-screen.jpg" onblur="blogCheckCover(this.value)"><small id="blogCoverMsg" style="color:var(--muted)"></small></div>
+    <div class="adm-grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      ${fld('blogCoverAlt','Cover alt text',d.coverAlt,'Describe the image')}
+      ${fld('blogCoverCap','Cover caption',d.coverCaption,'')}
+    </div>
+
+    <div class="adm-grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      ${fld('blogCats','Categories * (comma-separated)',d.categories,'Eye Care')}
+      ${fld('blogTags','Tags (comma-separated)',d.tags,'dry eyes, screen time')}
+    </div>
+
+    <details style="margin:6px 0 12px"><summary style="cursor:pointer;color:var(--primary-dark)">Author &amp; SEO (optional)</summary>
+      <div style="padding-top:10px">
+        <div class="adm-grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          ${fld('blogAuthor','Author name',d.authorName,'Inovacure Medical Team')}
+          ${fld('blogRole','Author role',d.authorRole,'')}
+        </div>
+        <div class="field"><label>Author bio</label><textarea id="blogBio" rows="2">${escapeHtml(d.authorBio)}</textarea></div>
+        ${fld('blogMetaTitle','SEO meta title',d.metaTitle,'')}
+        <div class="field"><label>SEO meta description</label><textarea id="blogMetaDesc" rows="2">${escapeHtml(d.metaDescription)}</textarea></div>
+      </div>
+    </details>
+
+    <div class="field"><label>FAQs (optional — one per line: <code>Question :: Answer</code>)</label><textarea id="blogFaqs" rows="3" placeholder="Are eye drops safe daily? :: Generally yes — follow the label.">${escapeHtml(d.faqs)}</textarea></div>
+
+    <div class="field"><label>Body * (Markdown — ## headings, lists, links, GFM tables. No raw HTML.)</label>
+      <textarea id="blogBody" rows="14" style="font-family:ui-monospace,Menlo,monospace;font-size:.86rem" placeholder="Intro paragraph…&#10;&#10;## A section&#10;&#10;- a point">${escapeHtml(d.body)}</textarea></div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px">
+      <button class="btn btn-ghost" onclick="blogSaveDraft()">Save draft (local)</button>
+      <button class="btn btn-ghost" onclick="blogPreview()">Preview .md</button>
+      <button class="btn btn-ghost" onclick="blogExport()">Download .md</button>
+      <button class="btn btn-primary" onclick="blogSaveProject()">Save to project (dev)</button>
+    </div>
+    <p style="margin-top:10px;color:var(--muted);font-size:.82rem">“Save to project” writes the file locally in development only. It never publishes on its own — a rebuild/redeploy does.</p>
+  </div>`;
+}
 
 /* ============================================================ AUDIT */
 function admAudit(){
@@ -2268,13 +2517,23 @@ function showView(name){
   document.body.classList.toggle('admin-mode', name==='admin');
 }
 
-/* hash routes:  #/  #/catalog #/pdp #/account #/checkout #/order  · #/admin (gate) */
+// True when served from the first-class /admin route (pathname-based, not hash).
+function onAdminRoute(){ return /(?:^|\/)admin\/?$/.test(location.pathname); }
+function resolveAdminView(){
+  if(currentUser){ showView('admin'); renderAdmin(); }
+  else { loginStage='password'; showView('login'); renderLogin(); }
+}
+
+/* hash routes:  #/  #/catalog #/pdp #/account #/checkout #/order  · /admin (own route) */
 function checkRoute(){
+  // The admin console lives at its own /admin route, independent of the
+  // storefront hash router: on that pathname always resolve the admin view.
+  if(onAdminRoute()){ resolveAdminView(); return; }
   const h=(location.hash||'#/').replace(/^#\/?/,'');
   const seg=h.split('/')[0]||'';
   if(seg==='admin'){
-    if(currentUser){ showView('admin'); renderAdmin(); }
-    else { loginStage='password'; showView('login'); renderLogin(); }
+    // Legacy in-store entry retired — the console now lives at /admin only.
+    location.assign('/admin');
     return;
   }
   // storefront routes

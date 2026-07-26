@@ -1,13 +1,13 @@
-import SanityImage from "./SanityImage";
+import BlogImage from "./BlogImage";
 import type { AuthorFullModel } from "@/lib/blog/types";
 
 // Author byline card shown after the article body. Net-new, built on tokens.
 export default function AuthorCard({ author }: { author: AuthorFullModel }) {
   return (
     <aside className="hc-authorcard" data-reveal>
-      {author.avatar?.asset && (
+      {author.avatar?.src && (
         <span className="hc-authorcard-avatar">
-          <SanityImage image={author.avatar} ratio={1} sizes="80px" />
+          <BlogImage image={author.avatar} ratio={1} sizes="80px" />
         </span>
       )}
       <div className="hc-authorcard-text">

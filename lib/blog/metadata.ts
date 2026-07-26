@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { urlForImage } from "./image";
 import { BLOG_BASE, ORG_LOGO, ORG_NAME, SITE_URL, postUrl } from "./config";
-import type { Post } from "./types";
+import type { BlogImage, Post } from "./types";
 
 // A published post shows in future-dated form as a draft; treat that + the SEO
 // noIndex flag as the two ways a post is hidden from search.
@@ -9,10 +8,16 @@ export function isDraft(post: Pick<Post, "publishedAt">): boolean {
   return !post.publishedAt || new Date(post.publishedAt) > new Date();
 }
 
+// Resolve a local image path to an absolute URL (OG/JSON-LD need absolute).
+function absImage(img: BlogImage | undefined): string | undefined {
+  const src = img?.src;
+  if (!src) return undefined;
+  return /^https?:\/\//i.test(src) ? src : `${SITE_URL}${src}`;
+}
+
 function ogImageUrl(post: Post): string | undefined {
   const override = post.seo?.ogImage;
-  const source = override?.asset ? override : post.coverImage;
-  return urlForImage(source)?.width(1200).height(630).url() ?? undefined;
+  return absImage(override?.src ? override : post.coverImage);
 }
 
 /** Per-post Next Metadata: title/description/canonical/OG/Twitter/robots. */
@@ -51,7 +56,7 @@ export function buildPostMetadata(post: Post): Metadata {
 /** JSON-LD @graph: BlogPosting + BreadcrumbList + Person (+ FAQPage). */
 export function buildPostJsonLd(post: Post) {
   const url = postUrl(post.slug);
-  const image = urlForImage(post.coverImage)?.width(1200).url();
+  const image = absImage(post.coverImage);
 
   const graph: Record<string, unknown>[] = [
     {

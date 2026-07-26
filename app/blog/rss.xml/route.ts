@@ -1,6 +1,11 @@
 import { getPostList } from "@/lib/blog/posts";
-import { urlForImage } from "@/lib/blog/image";
 import { BLOG_BASE, ORG_NAME, SITE_URL, postUrl } from "@/lib/blog/config";
+
+// Resolve a local image path ("/blog/x.webp") to an absolute feed URL.
+function absImage(src: string | undefined): string | undefined {
+  if (!src) return undefined;
+  return /^https?:\/\//i.test(src) ? src : `${SITE_URL}${src}`;
+}
 
 // RSS 2.0 feed of the latest published posts.
 export const dynamic = "force-static";
@@ -21,7 +26,7 @@ export async function GET() {
   const items = posts
     .map((p) => {
       const link = postUrl(p.slug);
-      const img = urlForImage(p.coverImage)?.width(1200).url();
+      const img = absImage(p.coverImage?.src);
       const cats = [...p.categories, ...p.tags]
         .map((c) => `<category>${escapeXml(c.title)}</category>`)
         .join("");

@@ -1,4 +1,4 @@
-import SanityImage from "./SanityImage";
+import BlogImage from "./BlogImage";
 import { formatDate, readingLabel } from "@/lib/blog/format";
 import type { PostCard } from "@/lib/blog/types";
 
@@ -9,7 +9,7 @@ export default function FeaturedArticle({ post }: { post: PostCard }) {
   return (
     <article className="hc-feature" data-reveal>
       <a href={`/blog/${post.slug}`} className="hc-feature-media">
-        <SanityImage
+        <BlogImage
           image={post.coverImage}
           ratio={16 / 10}
           sizes="(max-width: 900px) 100vw, 620px"

@@ -1,91 +1,103 @@
 # Inovacure Blog — architecture & operations
 
-An industrial-grade blog integrated into the existing Next.js site, authored in
-**Sanity CMS**. It reuses the site's `hc-` design system so it reads as native,
-and ships production SEO (metadata, JSON-LD, sitemap, robots, RSS, OG images).
-
-> Full rationale and phase history: `~/.claude/plans/this-is-how-gpt-cozy-treasure.md`.
+A file-based blog integrated into the Next.js site. Posts are authored as
+**Markdown files** in [`content/blog/`](../content/blog) — no external CMS, no
+database, no runtime service. It reuses the site's `hc-` design system so it
+reads as native, and ships production SEO (metadata, JSON-LD, sitemap, robots,
+RSS, OG images).
 
 ## Stack notes
 
-- **Next.js 16** (upgraded from 15.5 during this work — Sanity Studio v6 requires
-  React 19.2's `useEffectEvent`, which only Next 16's bundled React provides) +
-  **React 19.2**.
-- **Sanity** (`sanity`, `next-sanity`, `@sanity/client`, `@sanity/image-url`,
-  `@portabletext/react`). Body content is **Portable Text**, not Markdown.
-- Blog images use **`next/image`** with a Sanity CDN loader (hotspot-aware,
-  AVIF/WebP, blur-up LQIP). Existing `/assets` images are untouched.
+- **Next.js 16** + **React 19.2**.
+- Content: **Markdown** (`marked`) with **`gray-matter`** frontmatter and
+  **`github-slugger`** for stable heading ids. Bodies are rendered to HTML once
+  (build/request time) and styled by `.hc-prose`.
+- Blog cover/author images use **`next/image`** against files under `/public`
+  (referenced by path in frontmatter). Existing `/assets` images are reused.
 
-## First-time setup (required before content appears)
+No setup or credentials are required — the blog builds and renders from the
+Markdown files as-is.
 
-1. Create a Sanity project at https://www.sanity.io/manage (free tier is fine),
-   dataset `production`.
-2. Copy `.env.example` → `.env.local` and fill:
-   - `NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET=production`,
-     `NEXT_PUBLIC_SANITY_API_VERSION`
-   - `SANITY_API_READ_TOKEN` (API → Tokens, Viewer) — enables draft preview
-   - `SANITY_REVALIDATE_SECRET` (any random string; also set on the webhook)
-   - `SANITY_STUDIO_ENABLED=true` **only** where editors work (see Studio below)
-3. In Sanity → API → CORS origins, add your site origin(s).
-4. Regenerate types after schema changes: `npm run typegen`.
+## Authoring a post
 
-Until configured, the blog builds and renders graceful empty states — nothing
-breaks.
+Create `content/blog/<slug>.md`. The **filename is the slug** (`my-post.md` →
+`/blog/my-post`). Frontmatter drives everything; the body is Markdown.
 
-## The Studio (`/studio`)
+```markdown
+---
+title: "Your headline"
+excerpt: "One–two sentence summary used on cards, meta description and OG."
+publishedAt: "2026-07-20"      # a FUTURE date keeps the post a draft (404 + noindex)
+updatedAt: "2026-07-22"        # optional
+featured: true                 # optional — one featured post headlines /blog
+coverImage:
+  src: "/assets/imagery/consult-at-screen.jpg"   # a path under /public
+  alt: "Descriptive alt text"
+  caption: "Optional caption"                     # optional
+author:
+  name: "Inovacure Medical Team"
+  role: "Inovacure Pharmaceuticals"               # optional
+  bio: "Shown in the byline card."                # optional
+  avatar: "/assets/logo-ic.svg"                   # optional (path under /public)
+categories: ["Eye Care"]       # titles; slugs are derived automatically
+tags: ["dry eyes", "screen time"]
+faqs:                          # optional — renders an FAQ block + FAQPage JSON-LD
+  - question: "…?"
+    answer: "…"
+seo:                          # all optional
+  metaTitle: "…"
+  metaDescription: "…"
+  canonicalUrl: "…"
+  ogImage: { src: "/assets/…", alt: "…" }
+  noIndex: false
+relatedManual: ["other-slug"] # optional — overrides automatic related posts
+---
 
-Embedded but **gated and non-discoverable** by three layers:
-1. **Env gate** — the route 404s unless `SANITY_STUDIO_ENABLED === "true"`
-   (`app/studio/[[...tool]]/page.tsx`, mirroring `/store`'s flag pattern).
-2. **noindex** metadata + it is never linked from any nav/footer/sitemap.
-3. **Sanity login** gates all editing regardless.
+Body starts here. Standard Markdown:
 
-Enable it on a protected/admin deploy or locally; keep it off on the public site.
+## A section heading        (h2/h3 headings become the table of contents)
 
-## Editorial lifecycle
-
+Paragraphs, **bold**, _italic_, [links](https://example.com), lists,
+`inline code`, fenced code blocks, GFM tables, blockquotes and images all work.
 ```
-Draft (in Studio)
-  → Preview (Next draftMode + Sanity "drafts" perspective)
-  → Publish (set publishedAt ≤ now)
-  → Sanity webhook → POST /api/revalidate?secret=…
-  → revalidatePath('/blog','layout')  (+ sitemap + rss)
-  → Live
-```
 
-- A **future `publishedAt`** keeps a post as a draft: excluded from static
-  params, sitemap and RSS, marked `noindex`, and 404 for anonymous visitors
-  (visible only via Next draft mode).
-- **Reading time, table of contents, and related posts are computed** — never
-  stored, so there is nothing to keep in sync.
+Add the post's images under `public/` and reference them by absolute path
+(e.g. `/blog/diagram.webp`). Inline images are lazy-loaded automatically.
 
-### Configure the publish webhook
+## What's computed (never stored)
 
-Sanity → API → Webhooks → Create:
-- URL: `https://<your-domain>/api/revalidate?secret=<SANITY_REVALIDATE_SECRET>`
-- Trigger on: create / update / delete for `post`, `category`, `tag`, `author`
-- Projection: `{ "_type": _type, "slug": slug.current }`
+- **Reading time** — from the body word count.
+- **Table of contents** — from h2/h3 headings, with matching anchor ids.
+- **Related posts** — `relatedManual` if set, else ranked by shared
+  category/tags then recency (see `lib/blog/posts.ts`).
+- **Draft state** — a post with no `publishedAt` or a future one is excluded
+  from listing, sitemap, RSS and static params, and 404s publicly.
+
+## Publishing
+
+Content is static. To publish, add/edit the Markdown file and **rebuild/redeploy**
+(`pnpm build`). There is no webhook or revalidation endpoint — a new deploy is
+the publish step.
 
 ## Code map
 
 | Area | Path |
 |---|---|
-| Sanity schemas | `sanity/schemas/*` (post, author, category, tag, objects/*) |
-| Studio config | `sanity.config.ts`, gated route `app/studio/[[...tool]]/*` |
-| Data-access layer (only place that queries Sanity) | `lib/blog/*` |
-| GROQ queries | `lib/blog/queries.ts` |
-| Fetchers (public API) | `lib/blog/posts.ts` |
+| Markdown corpus | `content/blog/*.md` |
+| Data-access layer (public API) | `lib/blog/posts.ts` |
+| Markdown → HTML + TOC + reading time | `lib/blog/render.ts` |
+| File reading + frontmatter → typed models | `lib/blog/source.ts` |
+| View-model types | `lib/blog/types.ts` |
 | Metadata + JSON-LD | `lib/blog/metadata.ts` |
 | Components | `components/blog/*` |
 | Long-form typography | `components/blog/prose.css` (`.hc-prose`) |
 | Blog layout/UI CSS | `components/blog/blog.css` |
 | Routes | `app/blog/*` (index, `[slug]`, `category/[slug]`, `tag/[slug]`, `rss.xml`, OG) |
 | SEO infra (site-wide) | `app/sitemap.ts`, `app/robots.ts`, `app/manifest.ts` |
-| Revalidation webhook | `app/api/revalidate/route.ts` |
 
-**Rule:** routes/components import only from `lib/blog/*` — never `@sanity/client`
-directly. Everything from Sanity is strongly typed (`lib/blog/types.ts`); no
-`any` crosses that boundary.
+**Rule:** routes/components import blog data only from `lib/blog/posts.ts` —
+never the source/render layer directly. Everything is strongly typed
+(`lib/blog/types.ts`); no `any` crosses that boundary.
 
 ## Design-system integration
 
@@ -93,23 +105,14 @@ directly. Everything from Sanity is strongly typed (`lib/blog/types.ts`); no
   imports `home.css` + `inner.css`, so scroll reveals (`data-reveal`) and the
   header/footer match the rest of the site.
 - The TOC scrolls through **Lenis** (`window.__lenis`, published by
-  `SiteRuntime`) so it doesn't fight the smooth-scroll loop, with a native
-  `scrollIntoView` fallback under reduced motion.
-- Editors cannot break layout: Portable Text is a curated whitelist (h2–h4,
-  lists, quote, image, callout, code, table, FAQ, safe links) — no raw HTML or
-  inline styles.
-
-## Adding a post (editor)
-
-Studio → Post → New. Fill title, slug, excerpt, cover (with alt), body,
-author, ≥1 category, optional tags/FAQs, `publishedAt`. Optionally set one post
-`featured` to headline the index. Publish → it goes live within seconds via the
-webhook.
+  `SiteRuntime`) with a native `scrollIntoView` fallback under reduced motion.
+- Rendering is a curated Markdown pipeline (headings, lists, quotes, tables,
+  code, images, safe links) — authors write Markdown, not raw HTML.
 
 ## Verification checklist
 
-- `npm run build` clean; `npx tsc --noEmit` clean.
-- `/blog`, an article, category/tag pages render; drafts 404 anonymously.
+- `pnpm build` clean; `npx tsc --noEmit` clean.
+- `/blog`, an article, category/tag pages render; future-dated posts 404.
 - `/sitemap.xml`, `/robots.txt`, `/blog/rss.xml`, per-post `opengraph-image` resolve.
 - Google Rich Results Test on an article → BlogPosting + BreadcrumbList (+ FAQPage).
 - Reduced motion: article static & readable, TOC uses native scroll.

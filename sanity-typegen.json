@@ -1,5 +1,0 @@
-{
-  "path": "./{lib,sanity,app,components}/**/*.{ts,tsx}",
-  "schema": "./sanity/extract.json",
-  "generates": "./sanity/types.gen.ts"
-}
