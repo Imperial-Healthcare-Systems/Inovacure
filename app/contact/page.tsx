@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import SiteHeader from "@/components/site/SiteHeader";
 import Footer from "@/components/home/sections/Footer";
 import EnquiryPanel from "@/components/site/EnquiryPanel";
+import { COMPANY, MAP, WHATSAPP_URL } from "@/lib/site/company";
 
 export const metadata: Metadata = {
   title: "Contact — Inovacure Pharmaceuticals",
@@ -10,9 +11,9 @@ export const metadata: Metadata = {
 };
 
 // Company page — Contact: the conversion hub every /contact#enquiry CTA on
-// the site lands on. Contact facts strictly per the corrections doc (email +
-// registered office + domain); phone/WhatsApp appear only once the canonical
-// number is confirmed on the fact sheet.
+// the site lands on. Contact facts come from lib/site/company.ts (single source
+// of truth). WhatsApp is now published; voice-call reachability of the number
+// is still unconfirmed, so it is presented as WhatsApp-only (no tel: link).
 export default function ContactPage() {
   return (
     <>
@@ -48,31 +49,76 @@ export default function ContactPage() {
       <section className="hc-block">
         <div className="wrap">
           <div className="hc-rails">
-            <a className="hc-rail" href="mailto:info@inovacure.in" data-reveal>
+            <a
+              className="hc-rail"
+              href={`mailto:${COMPANY.email}`}
+              data-reveal
+            >
               <span className="hc-ic" aria-hidden="true">✉</span>
               <b>Email us</b>
-              <p>info@inovacure.in</p>
+              <p>{COMPANY.email}</p>
               <span className="hc-railcta">Write to us →</span>
             </a>
-            <div className="hc-rail" data-reveal>
+            <a
+              className="hc-rail"
+              href={MAP.placeUrl}
+              target="_blank"
+              rel="noopener"
+              data-reveal
+            >
               <span className="hc-ic" aria-hidden="true">◎</span>
               <b>Registered office</b>
               <p>
-                A-116, URB Trade Centre, Sector 132,
+                {COMPANY.address.lines[0]}
                 <br />
-                Noida, Gautam Budh Nagar, UP 201304
+                {COMPANY.address.lines[1]}
               </p>
-              <span className="hc-railcta">Inovacure Pharmaceuticals LLP</span>
-            </div>
-            <div className="hc-rail" data-reveal>
+              <span className="hc-railcta">View on Google Maps →</span>
+            </a>
+            <a
+              className="hc-rail"
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener"
+              data-reveal
+            >
               <span className="hc-ic" aria-hidden="true">☏</span>
-              <b>Phone &amp; WhatsApp</b>
-              <p>
-                Publishing shortly — until then, email reaches the same desk
-                and gets the same named contact.
-              </p>
-              <span className="hc-railcta">Every enquiry answered</span>
+              <b>WhatsApp</b>
+              <p>{COMPANY.whatsapp.e164}</p>
+              <span className="hc-railcta">Message us on WhatsApp →</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section className="hc-block hc-findus">
+        <div className="wrap">
+          <div className="hc-findhead" data-reveal>
+            <span className="eyebrow">Find us</span>
+            <h2>Visit our registered office</h2>
+            <p>{COMPANY.address.lines.join(", ")}</p>
+          </div>
+          <div className="hc-mapwrap" data-reveal="mask">
+            <div className="hc-mapframe">
+              <iframe
+                title={`Map — ${COMPANY.legalName} registered office, Urbtech Trade Centre, Sector 132, Noida`}
+                src={MAP.embedSrc}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                allowFullScreen
+              />
             </div>
+            <a
+              className="btn btn-primary hc-mapdir"
+              href={MAP.directionsUrl}
+              target="_blank"
+              rel="noopener"
+            >
+              Get directions
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </a>
           </div>
         </div>
       </section>

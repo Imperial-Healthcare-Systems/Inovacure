@@ -1,8 +1,10 @@
 // Beat 8 — footer, built to home-C.html + enhanced (column stagger, DS green
 // underline on link hover, sunrise hairline at the top edge). Standard static
-// footer — sticky-reveal dropped by client edit 2026-07-13. Phone omitted
-// until the fact sheet confirms one number (no unconfirmed facts, no visible
-// markers on customer surfaces).
+// footer — sticky-reveal dropped by client edit 2026-07-13. Contact facts come
+// from lib/site/company.ts. WhatsApp published; voice-call reachability still
+// unconfirmed, so it is shown as WhatsApp-only (no tel: link).
+import { COMPANY as INFO, MAP, WHATSAPP_URL } from "@/lib/site/company";
+
 const BUSINESS = [
   { label: "Ethical Promotion", href: "/business/ethical-promotion" },
   { label: "Nutraceuticals", href: "/business/nutraceuticals" },
@@ -61,12 +63,22 @@ export default function Footer() {
           <div data-reveal>
             <h4>Get in touch</h4>
             <ul>
-              <li>A-116, URB Trade Centre, Sector 132, Noida, UP 201304</li>
+              <li>{INFO.address.oneLine}</li>
               <li>
-                <a href="mailto:info@inovacure.in">info@inovacure.in</a>
+                <a href={MAP.placeUrl} target="_blank" rel="noopener">
+                  View on map ↗
+                </a>
               </li>
               <li>
-                <a href="https://www.inovacure.in">inovacure.in</a>
+                <a href={`mailto:${INFO.email}`}>{INFO.email}</a>
+              </li>
+              <li>
+                <a href={WHATSAPP_URL} target="_blank" rel="noopener">
+                  WhatsApp {INFO.whatsapp.e164}
+                </a>
+              </li>
+              <li>
+                <a href={INFO.website}>{INFO.websiteDisplay}</a>
               </li>
             </ul>
           </div>

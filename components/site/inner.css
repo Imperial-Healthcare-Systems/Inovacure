@@ -295,6 +295,16 @@ a.hc-rail:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-co
 .hc-railcta{font-family:var(--font-display);font-weight:700;font-size:.8rem;color:var(--success)}
 @media(max-width:880px){.hc-rails{grid-template-columns:1fr}}
 
+/* contact — find us / map (zero-key output=embed Google iframe, no billing) */
+.hc-findus .hc-findhead{max-width:62ch;margin-bottom:22px}
+.hc-findus .hc-findhead h2{margin:12px 0 8px}
+.hc-findus .hc-findhead p{color:var(--muted);font-size:.95rem}
+.hc-mapwrap{display:flex;flex-direction:column;align-items:flex-start;gap:18px}
+.hc-mapframe{width:100%;aspect-ratio:16/8;border-radius:var(--r-lg);overflow:hidden;
+  border:1px solid var(--line);box-shadow:var(--shadow-md);background:var(--halo)}
+.hc-mapframe iframe{width:100%;height:100%;border:0;display:block}
+@media(max-width:640px){.hc-mapframe{aspect-ratio:4/3}.hc-mapdir{width:100%}}
+
 /* intent-segmented enquiry panel (Contact) */
 .hc-enqlead{color:var(--muted);margin:10px 0 28px;max-width:56ch}
 .hc-enqpanel{display:grid;grid-template-columns:minmax(240px,.9fr) 1.6fr;gap:22px;align-items:start;
