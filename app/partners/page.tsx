@@ -75,7 +75,7 @@ export default function PartnersPage() {
         {/* PLACEHOLDER (manifest: stock-extras) — working together at the
             screen: partnership as a daily practice */}
         <div className="hc-headimg" data-band-parallax aria-hidden="true">
-          <img src="/assets/imagery/consult-at-screen.jpg" alt="" />
+          <img src="/assets/imagery/team-review.jpg" alt="" />
         </div>
       </header>
 

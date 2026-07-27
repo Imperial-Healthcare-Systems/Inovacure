@@ -48,12 +48,25 @@ export const COMPANY = {
 const MAP_QUERY =
   "Urbtech Trade Centre, Sector 132, Noida Expressway, Uttar Pradesh 201301";
 
+// Google's keyless "output=embed" iframe stopped working: it now 301-redirects
+// to /maps/embed?pb=… which returns X-Frame-Options: SAMEORIGIN, so browsers
+// refuse to frame it and the map renders blank. We embed OpenStreetMap instead
+// (also keyless/zero-billing, but frameable and it renders a marker at the pin);
+// Google still powers the interactive deep-links below. bbox is ~2:1 to match
+// the map frame's 16/8 aspect. Swap embedSrc back to a Google Share→Embed `pb`
+// iframe here if/when a branded Google embed is wanted.
+const { lat: PIN_LAT, lng: PIN_LNG } = COMPANY.geo;
+const OSM_BBOX = [PIN_LNG - 0.012, PIN_LAT - 0.006, PIN_LNG + 0.012, PIN_LAT + 0.006]
+  .map((n) => n.toFixed(5))
+  .join(",");
+
 export const MAP = {
   query: MAP_QUERY,
-  // Zero-key, zero-billing embed (classic output=embed iframe — no API key,
-  // no Google Cloud project). Matches the reference nexogreen implementation.
-  embedSrc: `https://maps.google.com/maps?q=${encodeURIComponent(MAP_QUERY)}&z=16&output=embed`,
-  // Deep links (universal Maps URLs — open the app on mobile, web otherwise).
+  // Embedded preview: OpenStreetMap with a marker at COMPANY.geo (see note above).
+  embedSrc: `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(
+    OSM_BBOX,
+  )}&layer=mapnik&marker=${PIN_LAT}%2C${PIN_LNG}`,
+  // Deep links (Google — universal Maps URLs; open the app on mobile, web else).
   directionsUrl: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(MAP_QUERY)}`,
   placeUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(MAP_QUERY)}`,
 } as const;

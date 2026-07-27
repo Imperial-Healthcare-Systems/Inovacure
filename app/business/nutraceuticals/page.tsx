@@ -67,6 +67,7 @@ export default function NutraceuticalsPage() {
               src="/assets/imagery/child-joy.jpg"
               alt="A joyful child — nutrition from paediatric to adult care"
               loading="lazy"
+              style={{ objectPosition: "50% 12%" }}
             />
           </div>
         </div>

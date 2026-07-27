@@ -104,7 +104,7 @@ export default function PharmaExportsPage() {
             </div>
             <div className="hc-pc" data-reveal>
               <figure className="hc-pcimg">
-                <img src="/assets/imagery/consult-at-screen.jpg" alt="Export desk team reviewing product documentation" loading="lazy" />
+                <img src="/assets/imagery/team-review.jpg" alt="Export desk team reviewing product documentation" loading="lazy" />
               </figure>
               <span className="hc-ic" aria-hidden="true">◎</span>
               <b>Dedicated export desk</b>

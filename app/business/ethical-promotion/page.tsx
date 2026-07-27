@@ -103,7 +103,7 @@ export default function EthicalPromotionPage() {
           <div className="hc-pgrid">
             <div className="hc-pc" data-reveal>
               <figure className="hc-pcimg">
-                <img src="/assets/imagery/doctor-phone.jpg" alt="A clinician reviewing product information" loading="lazy" />
+                <img src="/assets/imagery/doctor-phone.jpg" alt="A professional reviewing approved product information" loading="lazy" />
               </figure>
               <span className="hc-ic" aria-hidden="true">☰</span>
               <b>Approved information only</b>
