@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Spline_Sans } from "next/font/google";
 import "./globals.css";
+import "@/components/site/wa-fab.css";
+import WhatsAppFab from "@/components/site/WhatsAppFab";
 import { COMPANY, MAP } from "@/lib/site/company";
 
 const archivo = Archivo({
@@ -114,7 +116,12 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_JSONLD) }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* Site-wide floating WhatsApp CTA. Self-excludes on /store and
+            /admin (see the component) — the dormant storefront paints its own. */}
+        <WhatsAppFab />
+      </body>
     </html>
   );
 }
