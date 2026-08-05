@@ -22,12 +22,14 @@
     "marked": "^12.0.2",
     "next": "^16.2.11",
     "next-sanity": "^13.2.1",
+    "nodemailer": "^9.0.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "styled-components": "^6.4.4"
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "playwright": "^1.61.1",

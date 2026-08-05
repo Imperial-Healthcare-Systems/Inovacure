@@ -327,6 +327,9 @@ a.hc-rail:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-co
 .hc-wide{grid-column:1/-1}
 .hc-enqfoot{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .hc-enqfoot small{color:var(--muted);max-width:40ch}
+/* Honeypot — moved off-screen rather than display:none, because some bots skip
+   fields they can detect as hidden. Zero footprint in the grid. */
+.hc-hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 @media(max-width:880px){
   .hc-enqpanel{grid-template-columns:1fr}
   .hc-lanes{grid-template-columns:1fr 1fr}
