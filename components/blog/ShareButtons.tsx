@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { track } from "@/lib/blog/track";
 import { postUrl } from "@/lib/blog/config";
 
@@ -15,6 +15,14 @@ export default function ShareButtons({
 }) {
   const url = postUrl(slug);
   const [copied, setCopied] = useState(false);
+  // Detect the Web Share API only AFTER mount. Gating the native-share button on
+  // `navigator` during render makes the server HTML (no navigator → no button)
+  // differ from the client's, which trips a hydration mismatch. Starting false on
+  // both sides keeps the first render identical; the button reveals post-mount.
+  const [canNativeShare, setCanNativeShare] = useState(false);
+  useEffect(() => {
+    setCanNativeShare(typeof navigator !== "undefined" && "share" in navigator);
+  }, []);
 
   const native = async () => {
     track("share_click", { method: "native", slug });
@@ -48,7 +56,7 @@ export default function ShareButtons({
   return (
     <div className="hc-share" aria-label="Share this article">
       <span className="hc-share-label">Share</span>
-      {typeof navigator !== "undefined" && "share" in navigator && (
+      {canNativeShare && (
         <button type="button" className="hc-share-btn" onClick={native}>
           Share…
         </button>

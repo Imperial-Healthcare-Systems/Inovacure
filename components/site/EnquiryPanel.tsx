@@ -1,50 +1,23 @@
 "use client";
 
 // Intent-segmented enquiry panel (brief: export buyers · distributors/PCD ·
-// doctors/prescribers · general). Submitting persists to Supabase via a server
-// action when the DB is configured; if it isn't (or the write fails), it falls
+// doctors/prescribers · general). Submitting emails the enquiry to the team via
+// a server action (SMTP); if mail isn't configured or the send fails, it falls
 // back to composing a pre-filled email to info@inovacure.in — so the form always
 // works. The UI is unchanged either way.
 import { useState } from "react";
 import { submitEnquiry } from "@/lib/actions/enquiry";
-
-const TRACKS = [
-  {
-    key: "export",
-    label: "Export buyer",
-    desc: "International distribution & registration",
-    subject: "Export enquiry",
-    hint: "Your market, products of interest and volumes",
-  },
-  {
-    key: "distributor",
-    label: "Distributor / PCD",
-    desc: "Territory distribution within India",
-    subject: "Distribution enquiry",
-    hint: "Your territory, channel and current lines",
-  },
-  {
-    key: "doctor",
-    label: "Doctor / Pharmacy",
-    desc: "Product information & stocking",
-    subject: "Clinician & pharmacy enquiry",
-    hint: "Your practice or pharmacy and products of interest",
-  },
-  {
-    key: "general",
-    label: "Something else",
-    desc: "Careers, media, anything at all",
-    subject: "General enquiry",
-    hint: "Tell us what brings you here",
-  },
-];
+import { ENQUIRY_TRACKS, type EnquiryTrackDef } from "@/lib/site/enquiry-tracks";
+import { COMPANY } from "@/lib/site/company";
 
 export default function EnquiryPanel() {
-  const [track, setTrack] = useState(TRACKS[0]);
+  const [track, setTrack] = useState<EnquiryTrackDef>(ENQUIRY_TRACKS[0]);
   const [name, setName] = useState("");
   const [org, setOrg] = useState("");
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState("");
+  // Honeypot. Never shown, never focusable — anything in it means a bot.
+  const [website, setWebsite] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   const mailto = () => {
@@ -52,7 +25,7 @@ export default function EnquiryPanel() {
     const body = encodeURIComponent(
       `Name: ${name}\nOrganisation: ${org}\nEmail: ${email}\nTrack: ${track.label}\n\n${msg}`,
     );
-    return `mailto:info@inovacure.in?subject=${subject}&body=${body}`;
+    return `mailto:${COMPANY.email}?subject=${subject}&body=${body}`;
   };
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -65,6 +38,7 @@ export default function EnquiryPanel() {
         organisation: org,
         email,
         message: msg,
+        website,
       });
       if (res.ok) {
         setStatus("sent");
@@ -90,7 +64,7 @@ export default function EnquiryPanel() {
   return (
     <div className="hc-enqpanel" id="enquiry">
       <div className="hc-lanes" role="tablist" aria-label="Enquiry type">
-        {TRACKS.map((t) => (
+        {ENQUIRY_TRACKS.map((t) => (
           <button
             key={t.key}
             role="tab"
@@ -140,6 +114,21 @@ export default function EnquiryPanel() {
             placeholder={track.hint}
           />
         </label>
+        {/* Honeypot: off-screen, untabbable and hidden from assistive tech, so
+            no human ever fills it. A submission that does is dropped silently. */}
+        <div className="hc-hp" aria-hidden="true">
+          <label>
+            Website
+            <input
+              type="text"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+            />
+          </label>
+        </div>
         <div className="hc-wide hc-enqfoot">
           <button className="btn btn-primary" type="submit" disabled={status === "sending"}>
             {status === "sending" ? "Sending…" : "Send your enquiry"}
@@ -150,8 +139,9 @@ export default function EnquiryPanel() {
             <small>Please add your name and a short message, then try again.</small>
           ) : (
             <small>
-              We&rsquo;ll record your enquiry and get back to you. If our system
-              isn&rsquo;t reachable, this opens your email app to info@inovacure.in instead.
+              Your enquiry goes straight to our team and we&rsquo;ll get back to
+              you. If our mail server isn&rsquo;t reachable, this opens your email
+              app to {COMPANY.email} instead.
             </small>
           )}
         </div>

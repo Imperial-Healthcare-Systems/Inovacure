@@ -1,0 +1,57 @@
+/* ===================================================================
+   Floating WhatsApp CTA (components/site/WhatsAppFab.tsx).
+
+   Lives in its own file — not inner.css — because the FAB mounts in the ROOT
+   layout, which also serves /preview/home (home.css only, no inner.css). Kept
+   out of globals.css so the dormant storefront's `.wa` rules stay untouched.
+   hc- prefixed, built on the live brand tokens.
+
+   z-index 85: above page content, below the sticky header (90) and the
+   full-screen mobile nav (110) — so an open menu correctly covers it.
+   =================================================================== */
+
+.hc-wafab{position:fixed;z-index:85;
+  right:clamp(16px,2.2vw,24px);
+  bottom:calc(clamp(16px,2.2vw,24px) + env(safe-area-inset-bottom,0px));
+  display:inline-flex;align-items:center;gap:10px;
+  /* delayed reveal so the CTA doesn't fight the home dawn intro; `both` holds
+     the from-state through the delay, so there's no pre-animation flash. */
+  animation:hcWaIn .5s var(--ease) .9s both}
+
+@keyframes hcWaIn{from{opacity:0;transform:translateY(14px) scale(.86)}to{opacity:1;transform:none}}
+
+/* Label — collapsed at rest, expands on hover/keyboard focus. */
+.hc-wafab-label{font-family:var(--font-display);font-weight:600;font-size:.86rem;line-height:1;
+  white-space:nowrap;color:var(--ink);background:#fff;border:1px solid var(--line);
+  border-radius:999px;box-shadow:var(--shadow-md);overflow:hidden;
+  max-width:0;padding:12px 0;opacity:0;transform:translateX(10px);
+  transition:max-width .34s var(--ease),padding .34s var(--ease),opacity .24s,transform .34s var(--ease)}
+.hc-wafab:hover .hc-wafab-label,
+.hc-wafab:focus-visible .hc-wafab-label{max-width:12rem;padding:12px 18px;opacity:1;transform:none}
+
+/* Disc — WhatsApp brand green (#25D366), white glyph. */
+.hc-wafab-disc{flex:none;width:56px;height:56px;border-radius:50%;
+  background:#25d366;color:#fff;display:grid;place-items:center;
+  box-shadow:0 12px 30px rgba(37,211,102,.42);
+  transition:transform .25s var(--ease),background .25s,box-shadow .25s}
+.hc-wafab-disc svg{width:28px;height:28px}
+.hc-wafab:hover .hc-wafab-disc{background:#1eb85c;transform:translateY(-2px) scale(1.05);
+  box-shadow:0 18px 38px rgba(37,211,102,.5)}
+.hc-wafab:active .hc-wafab-disc{transform:translateY(0) scale(.97)}
+.hc-wafab:focus-visible{outline:none}
+.hc-wafab:focus-visible .hc-wafab-disc{outline:3px solid var(--primary-500);outline-offset:3px}
+
+/* Touch/narrow: no hover to reveal a label, so drop it and tighten the disc. */
+@media(max-width:700px){
+  .hc-wafab-label{display:none}
+  .hc-wafab-disc{width:52px;height:52px}
+  .hc-wafab-disc svg{width:26px;height:26px}
+}
+
+/* Print: a tap target is meaningless on paper. */
+@media print{.hc-wafab{display:none}}
+
+@media(prefers-reduced-motion:reduce){
+  .hc-wafab{animation:none}
+  .hc-wafab-label,.hc-wafab-disc{transition:none}
+}

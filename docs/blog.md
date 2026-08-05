@@ -1,10 +1,18 @@
 # Inovacure Blog — architecture & operations
 
-A file-based blog integrated into the Next.js site. Posts are authored as
-**Markdown files** in [`content/blog/`](../content/blog) — no external CMS, no
-database, no runtime service. It reuses the site's `hc-` design system so it
-reads as native, and ships production SEO (metadata, JSON-LD, sitemap, robots,
-RSS, OG images).
+A **hybrid** blog integrated into the Next.js site. Posts come from **two
+sources, merged into one blog**:
+
+1. **Markdown files** in [`content/blog/`](../content/blog) — git-authored by a
+   developer (publish = commit + redeploy).
+2. **Sanity CMS** — authored by a non-technical client in a web editor
+   (`inovacure.sanity.studio`); publishes appear live via a revalidation webhook.
+
+Both are normalised to the same typed `Post` shape in `lib/blog/`, so the
+listing, article page, SEO and design are identical regardless of source. On a
+slug collision the Markdown file wins. If Sanity is unconfigured, the blog
+gracefully falls back to Markdown-only. It reuses the site's `hc-` design system
+and ships production SEO (metadata, JSON-LD, sitemap, robots, RSS, OG images).
 
 ## Stack notes
 
@@ -75,9 +83,18 @@ Add the post's images under `public/` and reference them by absolute path
 
 ## Publishing
 
-Content is static. To publish, add/edit the Markdown file and **rebuild/redeploy**
-(`pnpm build`). There is no webhook or revalidation endpoint — a new deploy is
-the publish step.
+- **Markdown posts:** add/edit the file and **redeploy** — a new build is the publish step.
+- **Sanity posts:** publish in the Studio; a Sanity webhook calls
+  `POST /api/revalidate?secret=$SANITY_REVALIDATE_SECRET`, which revalidates the
+  `/blog` subtree so the post appears live without a redeploy. Configure the
+  webhook in Sanity → API → Webhooks (projection `{ "_type": _type, "slug": slug.current }`).
+
+Required env for the Sanity source (Vercel + `.env.local`):
+`NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`,
+`NEXT_PUBLIC_SANITY_API_VERSION`, `SANITY_API_READ_TOKEN` (if the dataset is
+private), `SANITY_REVALIDATE_SECRET`. The Sanity read layer lives in
+`lib/blog/sanity/`; the Studio schema/config lives on the `feature/blog-sanity`
+branch (deploy with `npx sanity deploy`).
 
 ## Code map
 

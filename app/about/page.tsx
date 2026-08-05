@@ -36,7 +36,11 @@ export default function AboutPage() {
         {/* PLACEHOLDER (manifest: stock-extras b2) — warmth in daylight; the
             "new sun" read against the dawn-dark band */}
         <div className="hc-headimg" data-band-parallax aria-hidden="true">
-          <img src="/assets/imagery/doctor-warm-smile.jpg" alt="" />
+          <img
+            src="/assets/imagery/doctor-warm-smile.jpg"
+            alt=""
+            style={{ objectPosition: "center 18%" }}
+          />
         </div>
       </header>
 
