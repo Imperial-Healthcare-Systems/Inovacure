@@ -25,6 +25,10 @@ export const COMPANY = {
     streetAddress: "A-116, Urbtech Trade Centre, Noida Expressway, Sector 132",
     locality: "Gautam Buddha Nagar, Noida",
     region: "Uttar Pradesh",
+    // 201301 is the GST-registered PIN and is deliberate. The Google Maps
+    // listing for the same building states 201304 — do NOT "correct" this to
+    // match it. Checked again 2026-08-05 when the pin was re-sourced from that
+    // listing; the registered address stays authoritative for PostalAddress.
     postalCode: "201301",
     country: "IN",
     // Two-line display used on the contact/office surfaces.
@@ -37,16 +41,25 @@ export const COMPANY = {
       "A-116, Urbtech Trade Centre, Noida Expressway, Sector 132, Noida, UP 201301",
   },
 
-  // Approx. pin: Urbtech Trade Centre (UTC), Sector 132, Noida Expressway.
-  // Filled from the shared Google pin; refine if the listing is repositioned.
-  geo: { lat: 28.5106, lng: 77.3891 },
+  // Exact pin for the "Urbtech Trade Centre" Google listing shared by the
+  // client on 2026-08-05 (maps.app.goo.gl/65D2nQN2GG4JNtqs9), read from that
+  // place's !3d/!4d payload. Supersedes an approximate pin that sat ~1.3 km
+  // south-east of the building. Every map link + the JSON-LD GeoCoordinates
+  // derive from this pair, so re-pinning means editing only these two numbers.
+  geo: { lat: 28.5160762, lng: 77.3770456 },
 } as const;
 
-// The building landmark geocodes more precisely than the unit-prefixed address,
-// so map queries key off it. The pin can be "tweaked later" by editing this one
-// string — every map/link URL below is derived from it.
+// Human-readable destination label. Display/fallback only — the deep-links no
+// longer geocode this string, because a text query is re-resolved by Google on
+// every click and can silently land somewhere else. They key off COMPANY.geo
+// and the canonical listing below instead, so the pin cannot drift.
 const MAP_QUERY =
   "Urbtech Trade Centre, Sector 132, Noida Expressway, Uttar Pradesh 201301";
+
+// The office's canonical Google Maps listing, exactly as shared by the client.
+// Opening this (rather than a search query) guarantees the business card —
+// name, photos, reviews — resolves to the intended place every time.
+const GOOGLE_PLACE_URL = "https://maps.app.goo.gl/65D2nQN2GG4JNtqs9";
 
 // Google's keyless "output=embed" iframe stopped working: it now 301-redirects
 // to /maps/embed?pb=… which returns X-Frame-Options: SAMEORIGIN, so browsers
@@ -67,8 +80,12 @@ export const MAP = {
     OSM_BBOX,
   )}&layer=mapnik&marker=${PIN_LAT}%2C${PIN_LNG}`,
   // Deep links (Google — universal Maps URLs; open the app on mobile, web else).
-  directionsUrl: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(MAP_QUERY)}`,
-  placeUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(MAP_QUERY)}`,
+  // Directions route to the exact coordinates rather than a place name, so the
+  // arrival point is the building itself and not a re-geocoded approximation.
+  directionsUrl: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+    `${PIN_LAT},${PIN_LNG}`,
+  )}`,
+  placeUrl: GOOGLE_PLACE_URL,
 } as const;
 
 // Pre-filled WhatsApp chat link (opens wa.me → app/web with a starter message).
