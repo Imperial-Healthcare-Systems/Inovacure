@@ -101,16 +101,17 @@ export const SOCIAL = [
     label: "Facebook",
     href: "https://www.facebook.com/people/Inovacure-Pharmaceuticals/61592259660397/",
   },
-  // LinkedIn is intentionally absent (decision 2026-08-05). The URL supplied
-  // was /company/142925049/admin/dashboard/ — the page-management back-end,
-  // which drops non-admins on a sign-up wall. The numeric-id form
-  // (/company/142925049/) also authwalls logged-out visitors, and an
-  // unverifiable URL in `sameAs` weakens the entity association rather than
-  // strengthening it. To add it, get the page's public vanity URL from
-  // LinkedIn (Edit page → Page info → Public URL — it looks like
-  // linkedin.com/company/<slug>) and restore one entry here:
-  //   { key: "linkedin", label: "LinkedIn", href: "<vanity url>" }
-  // The footer already carries the LinkedIn glyph, so nothing else changes.
+  {
+    key: "linkedin",
+    label: "LinkedIn",
+    // The page's public vanity URL. Deliberately NOT the numeric-id form
+    // (/company/142925049/), and emphatically not the /admin/dashboard/ link
+    // this was first given as — that one is the page-management back-end and
+    // drops every non-admin on a sign-up wall. Only the vanity slug is
+    // reliably reachable by logged-out visitors and by search engines, which
+    // is what `sameAs` needs to verify the account belongs to us.
+    href: "https://www.linkedin.com/company/inovacure-pharmaceuticals",
+  },
 ] as const;
 
 // Pre-filled WhatsApp chat link (opens wa.me → app/web with a starter message).
