@@ -88,6 +88,31 @@ export const MAP = {
   placeUrl: GOOGLE_PLACE_URL,
 } as const;
 
+// Official social profiles. Surfaced in the footer and as schema.org `sameAs`
+// on the Organization entity, which is how search engines tie these accounts to
+// the company — so only add a profile that is genuinely ours and public.
+//
+// Facebook: the client supplied the profile.php?id=… form; Facebook itself
+// 302s that to the canonical /people/<name>/<id>/ URL, which is what's stored.
+// The numeric id is the permanent part, so a page rename won't break it.
+export const SOCIAL = [
+  {
+    key: "facebook",
+    label: "Facebook",
+    href: "https://www.facebook.com/people/Inovacure-Pharmaceuticals/61592259660397/",
+  },
+  // LinkedIn is intentionally absent (decision 2026-08-05). The URL supplied
+  // was /company/142925049/admin/dashboard/ — the page-management back-end,
+  // which drops non-admins on a sign-up wall. The numeric-id form
+  // (/company/142925049/) also authwalls logged-out visitors, and an
+  // unverifiable URL in `sameAs` weakens the entity association rather than
+  // strengthening it. To add it, get the page's public vanity URL from
+  // LinkedIn (Edit page → Page info → Public URL — it looks like
+  // linkedin.com/company/<slug>) and restore one entry here:
+  //   { key: "linkedin", label: "LinkedIn", href: "<vanity url>" }
+  // The footer already carries the LinkedIn glyph, so nothing else changes.
+] as const;
+
 // Pre-filled WhatsApp chat link (opens wa.me → app/web with a starter message).
 export const WHATSAPP_URL = `https://wa.me/${COMPANY.whatsapp.digits}?text=${encodeURIComponent(
   "Hi Inovacure, I'd like to enquire about",

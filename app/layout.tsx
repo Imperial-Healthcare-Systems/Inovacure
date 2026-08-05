@@ -3,7 +3,7 @@ import { Archivo, Spline_Sans } from "next/font/google";
 import "./globals.css";
 import "@/components/site/wa-fab.css";
 import WhatsAppFab from "@/components/site/WhatsAppFab";
-import { COMPANY, MAP } from "@/lib/site/company";
+import { COMPANY, MAP, SOCIAL } from "@/lib/site/company";
 
 const archivo = Archivo({
   subsets: ["latin"],
@@ -81,6 +81,11 @@ const ORG_JSONLD = {
   hasMap: MAP.placeUrl,
   email: COMPANY.email,
   url: "https://www.inovacure.in/",
+  // sameAs is how a search engine links these profiles to this Organization
+  // (entity reconciliation / knowledge panel). Only verified official accounts
+  // belong here — a wrong or dead URL weakens the association rather than
+  // adding to it.
+  sameAs: SOCIAL.map((s) => s.href),
 };
 
 // WebSite entity — helps search engines model the site as a whole (separate
